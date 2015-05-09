@@ -22,9 +22,9 @@ pwd.drop <- "D:/"
 pwd.git  <- "C:/Users/Jon/Documents/R/"
 
 # Define paths.
-# "raw"  is raw data (*.dbf files from DOGM, *.csv files, etc.). 
+# "raw"  is raw data (*.dbf files from DOGM, *.csv files, etc.).
 # "data" is prepared data files (typically *.rda).
-# "look" is lookup tables. 
+# "look" is lookup tables.
 # "plot" is the directory for saving plot *.pdf files.
 # "work" is the working directory where main.R and IO_options.R are located.
 # "fun"  is the directory for all *.R functions.
@@ -44,7 +44,8 @@ setwd(path$work)
 # 1.2 Functions -----------------------------------------------------------
 
 # List of functions used in this script to be loaded here
-flst <- file.path(path$fun, c("clipboard.R"))
+flst <- file.path(path$fun, c("wtRadius.R",
+                              "clipboard.R"))
 
 # Load each function in list then remove temporary file list variables
 for (f in flst) source(f); remove(f, flst)
@@ -63,4 +64,68 @@ options(stringsAsFactors=FALSE)
 # Run script "IO_options.R" to load user defined input/output options
 source("UO_options.R")
 
-# blah blah
+
+# 2.0 Read in simulation data ---------------------------------------------
+
+# Use read.csv to read simulation data. Assuming that all the *.csv files have
+# the same time index, create one data.frame out of all the data
+data <- data.frame(time =  read.csv(file.path(path$raw, "sample oil.csv"))[,1],
+                   coil =  read.csv(file.path(path$raw, "sample oil.csv"))[,2],
+                   power = read.csv(file.path(path$raw, "sample power.csv"))[,2],
+                   NER =   read.csv(file.path(path$raw, "sample NER.csv"))[,2])
+
+# Unit conversions: time from seconds to days
+data$time <- data$time/3600/24
+
+
+# x.x Drilling ------------------------------------------------------------
+
+# Calculate well segment lengths
+wellLength <- data.frame(turn = wtRadius(t = uopt$wellDesign$turnrate,
+                                         p = uopt$wellDesign$pipelength,
+                                         a = uopt$wellDesign$angle),
+                         total = uopt$wellDesign$totalL)
+wellLength$stem <- uopt$wellDesign$TVD-wellLength$turn
+wellLength$prod <- uopt$wellDesign$totalL-(wellLength$stem+wellLength$turn)
+
+# Calculate well drilling schedule
+drillsched <- rep(c(rep(0, uopt$drillTime-1), uopt$nrig), ceiling(uopt$nwell/uopt$nrig))
+
+# If too many wells were drilled in last time step
+if (sum(drillsched) > uopt$nwell) {
+
+  # Replace last entry with correct number of wells
+  drillsched[length(drillsched)] <- uopt$nwell-sum(drillsched[1:(length(drillsched)-1)])
+}
+
+# Calculate capital cost for wells
+capwell <- drillsched*uopt$wcost
+
+
+# Heating -----------------------------------------------------------------
+
+
+
+# Oil Production ----------------------------------------------------------
+
+# Calculate oil production, adjust (1) to bbl from m^3, and (2) from simulated
+# length to production length
+oil <- c(0, diff(data$coil))*6.2898*wellLength$prod/(5*3.28084)
+
+
+# DCF Analysis ------------------------------------------------------------
+
+# Build timing data.frame with all terms in CF equation
+model <-         data.frame(time = seq(1:(length(capwell)+length(oil))))
+model$capwell <- c(capwell, rep(0, nrow(model)-length(capwell)))
+model$oil <-     c(rep(0, nrow(model)-length(oil)), oil)
+model$df <-      1/((1+uopt$IRR/365)^seq(1:nrow(model)))
+
+NPV <- function(op) {
+  NPV <- with(model, sum(df*(oil*op-capwell)))
+  return(NPV)
+}
+
+# Oil Supply Price
+oilSP <- uniroot(NPV, lower = 0, upper = 10e3)$root
+
