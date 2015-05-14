@@ -18,8 +18,10 @@ path <- NULL
 
 # Path switch - uncomment and/or replace with the path directory for your local
 # copy of the Git repository and Dropbox files.
-pwd.drop <- "D:/"
-pwd.git  <- "C:/Users/Jon/Documents/R/"
+# pwd.drop <- "D:/"
+# pwd.git  <- "C:/Users/Jon/Documents/R/"
+pwd.drop <- "/Users/john/"
+pwd.git  <- "/Users/john/Documents/"
 
 # Define paths.
 # "raw"  is raw data (*.dbf files from DOGM, *.csv files, etc.).
@@ -77,6 +79,10 @@ data <- data.frame(time =  read.csv(file.path(path$raw, "sample oil.csv"))[,1],
 # Unit conversions: time from seconds to days
 data$time <- data$time/3600/24
 
+# Fit each oil/power data with approximation functions
+fcoil <-  approxfun(x = data$time, y = data$coil)
+fpower <- approxfun(x = data$time, y = data$power)
+
 
 # x.x Drilling ------------------------------------------------------------
 
@@ -104,22 +110,34 @@ capwell <- drillsched*uopt$wcost
 
 # Heating -----------------------------------------------------------------
 
+# Heater capital cost
+capheater <- uopt$heatcost*(wellLength$total/uopt$heatBlength)*uopt$nwell
 
 
 # Oil Production ----------------------------------------------------------
 
 # Calculate oil production, adjust (1) to bbl from m^3, and (2) from simulated
 # length to production length
-oil <- c(0, diff(data$coil))*6.2898*wellLength$prod/(5*3.28084)
+oil <- c(0, diff(fcoil(1:max(data$time))))*6.2898*wellLength$prod/(5*3.28084)
 
 
 # DCF Analysis ------------------------------------------------------------
 
 # Build timing data.frame with all terms in CF equation
 model <-         data.frame(time = seq(1:(length(capwell)+length(oil))))
+
+# Build discount factor vector
+df <- NULL
+n <- 0
+while(length(df) < nrow(model)) {
+
+  df <- c(df, rep(1/((1+uopt$IRR)^n), 365))
+  n <- n+1
+}
+model$df <- df[1:nrow(model)]
+
 model$capwell <- c(capwell, rep(0, nrow(model)-length(capwell)))
 model$oil <-     c(rep(0, nrow(model)-length(oil)), oil)
-model$df <-      1/((1+uopt$IRR/365)^seq(1:nrow(model)))
 
 NPV <- function(op) {
   NPV <- with(model, sum(df*(oil*op-capwell)))
