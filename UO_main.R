@@ -18,10 +18,14 @@ path <- NULL
 
 # Path switch - uncomment and/or replace with the path directory for your local
 # copy of the Git repository and Dropbox files.
-# pwd.drop <- "D:/"
-# pwd.git  <- "C:/Users/Jon/Documents/R/"
-pwd.drop <- "/Users/john/"
-pwd.git  <- "/Users/john/Documents/"
+
+# Windows
+pwd.drop <- "D:/"
+pwd.git  <- "C:/Users/Jon/Documents/R/"
+
+# # Mac
+# pwd.drop <- "/Users/john/"
+# pwd.git  <- "/Users/john/Documents/"
 
 # Define paths.
 # "raw"  is raw data (*.dbf files from DOGM, *.csv files, etc.).
@@ -30,11 +34,12 @@ pwd.git  <- "/Users/john/Documents/"
 # "plot" is the directory for saving plot *.pdf files.
 # "work" is the working directory where main.R and IO_options.R are located.
 # "fun"  is the directory for all *.R functions.
-path$raw  <-    paste(pwd.drop, "Dropbox/Oil Shale/Raw Data", sep = "")
-path$data <-    paste(pwd.drop, "Dropbox/Oil Shale/Prepared Data", sep = "")
-path$plot <-    paste(pwd.drop, "Dropbox/Oil Shale/Plots", sep = "")
-path$work <-    paste(pwd.git,  "oilshale/", sep = "")
-path$fun  <-    paste(pwd.git,  "oilshale/Functions", sep = "")
+path$raw   <- paste(pwd.drop, "Dropbox/Oil Shale/Raw Data", sep = "")
+path$data  <- paste(pwd.drop, "Dropbox/Oil Shale/Prepared Data", sep = "")
+path$plot  <- paste(pwd.drop, "Dropbox/Oil Shale/Plots", sep = "")
+path$work  <- paste(pwd.git,  "oilshale/", sep = "")
+path$fun   <- paste(pwd.git,  "oilshale/Functions", sep = "")
+path$BCfig <- paste(pwd.drop, "Dropbox/Oil Shale/Book Chapter/Figures", sep = "")
 
 # Remove temporary path objects
 remove(pwd.drop, pwd.git)
@@ -55,7 +60,8 @@ for (f in flst) source(f); remove(f, flst)
 
 # 1.3 Libraries -----------------------------------------------------------
 
-# Libraries used in this script go here
+library(zoo)
+library(sqldf)
 
 
 # 1.4 Options -------------------------------------------------------------
@@ -65,6 +71,19 @@ options(stringsAsFactors=FALSE)
 
 # Run script "IO_options.R" to load user defined input/output options
 source("UO_options.R")
+
+
+# X.X Drilling Cost Fitting -----------------------------------------------
+
+# Update drilling and completion costs?
+if (uopt$update.hdrill == T) {source(file.path(path$fun, "hdrill cost.R"))}
+
+# Update drilling time?
+if (uopt$update.tDrill == T) {source(file.path(path$fun, "tDrill.R"))}
+
+# Load results
+load(file.path(path$data, "hdrill.rda"))
+load(file.path(path$data, "tDrill.rda"))
 
 
 # 2.0 Read in simulation data ---------------------------------------------
@@ -95,7 +114,7 @@ wellLength$stem <- uopt$wellDesign$TVD-wellLength$turn
 wellLength$prod <- uopt$wellDesign$totalL-(wellLength$stem+wellLength$turn)
 
 # Calculate well drilling schedule
-drillsched <- rep(c(rep(0, uopt$drillTime-1), uopt$nrig), ceiling(uopt$nwell/uopt$nrig))
+drillsched <- rep(c(rep(0, tDrill-1), uopt$nrig), ceiling(uopt$nwell/uopt$nrig))
 
 # If too many wells were drilled in last time step
 if (sum(drillsched) > uopt$nwell) {
@@ -119,6 +138,12 @@ capheater <- uopt$heatcost*(wellLength$total/uopt$heatBlength)*uopt$nwell
 # Calculate oil production, adjust (1) to bbl from m^3, and (2) from simulated
 # length to production length
 oil <- c(0, diff(fcoil(1:max(data$time))))*6.2898*wellLength$prod/(5*3.28084)
+
+
+# Production, separation, and storage -------------------------------------
+
+capPSS <- uopt$fcapPSS(wellLength$total)*uopt$nwell
+opPSS <- uopt$fopPSS(wellLength$total)*uopt$nwell
 
 
 # DCF Analysis ------------------------------------------------------------

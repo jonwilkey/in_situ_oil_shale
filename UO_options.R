@@ -16,6 +16,12 @@
 uopt <- NULL
 
 
+# Update Functions --------------------------------------------------------
+
+uopt$update.hdrill <- F # Well drilling & completion costs
+uopt$update.tDrill <- F # Well drilling time
+
+
 # Parameter space ---------------------------------------------------------
 
 uopt$IRR <- 0.1
@@ -32,13 +38,10 @@ uopt$wellDesign <- data.frame(turnrate = 3,    # Turning rate (deg./pipe)
                               pipelength = 30, # Pipe segment length (ft)
                               angle = 90,      # Total turn angle (deg.)
                               TVD = 2500,      # True vertical depth (ft)
-                              totalL = 19553)  # Total length (ft) - NOTE cannot exceed 5 mi (length of deposit)
-
-# Drill Time (in days)
-uopt$drillTime <- as.numeric(difftime(as.Date("2013-05-30"), as.Date("2013-02-23"), units = "days"))
+                              totalL = 11e3)   # Total length (ft) - NOTE cannot exceed 5 mi (length of deposit)
 
 # Number of rigs
-uopt$nrig <- 15
+uopt$nrig <- 14
 
 # Cost per well
 uopt$wcost <- 11e6
@@ -49,6 +52,22 @@ uopt$wcost <- 11e6
 # Base design
 uopt$heatcost <-    90e3*(uopt$cpi/218.056) # Base cost, inflation adjusted from 2010
 uopt$heatBlength <- 1936                    # Base length (ft)
-uopt$geneff <-      0.46                    # Generator efficiency
+uopt$geneff <-      0.48                    # Generator efficiency
 uopt$gencost <-     1100*(uopt$cpi/232.957) # Base cost per kW capacity, inflation adjusted from 2013
 
+
+# Production, separation, and storage Options -----------------------------
+
+# Capital and operating cost approximation functions - input cost data here from
+# here:
+# http://www.eia.gov/pub/oil_gas/natural_gas/data_publications/cost_indices_equipment_production/current/coststudy.html
+uopt$fcapPSS <- approxfun(x = c(2e3, 4e3, 8e3, 12e3),
+                          y = c(1178400, 1633700, 2584400, 3033100)*(uopt$cpi/214.537)/10)
+uopt$fopPSS <- approxfun(x = c(2e3, 4e3, 8e3, 12e3),
+                          y = c(255700, 285400, 394200, 555300)*(uopt$cpi/214.537)/10)
+
+
+# Gas Supply --------------------------------------------------------------
+
+# Gas Price (2014 USD per MCF)
+uopt$gp <- mean(5.62,6.57,6.35,5.78,5.67,5.39,5.35,4.88,4.95,4.96,4.93,5.53)
