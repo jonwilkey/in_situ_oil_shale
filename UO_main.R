@@ -62,6 +62,7 @@ for (f in flst) source(f); remove(f, flst)
 
 library(zoo)
 library(sqldf)
+library(lhs)
 
 
 # 1.4 Options -------------------------------------------------------------
