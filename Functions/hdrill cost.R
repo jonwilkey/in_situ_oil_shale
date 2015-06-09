@@ -1,3 +1,30 @@
+# Function Info -----------------------------------------------------------
+# Name:       hdrill cost.R (Horizontal Drilling Cost Analysis Script)
+# Author(s):  Jon Wilkey
+# Contact:    jon.wilkey@gmail.com
+
+
+# Inputs ------------------------------------------------------------------
+
+# NA - runs as script
+
+
+# Outputs -----------------------------------------------------------------
+
+# cdrill - fit for capital cost of drilling
+
+# ccompl - fit for capital cost of completion
+
+# Plots - of drilling and capital cost fits
+
+
+# Description -------------------------------------------------------------
+
+# blah
+
+
+# Function ----------------------------------------------------------------
+
 # Load required *.csv and *.rda data files
 data <- read.csv(file.path(path$raw, "hD&C costs.csv"))
 load("D:/Dropbox/CLEAR/DOGM Data/Prepared Data/production_v5.rda")
@@ -28,39 +55,66 @@ data <- merge(x = data, y = temp, by.x = "rdate", by.y = "date")
 data$adcost <- data$dcost*(uopt$cpi/data$cpi)
 data$accost <- data$ccost*(uopt$cpi/data$cpi)
 
-# Subset to just drilling and completion
-drill <- subset(data, subset = (adcost >=0))
-compl <- subset(data, subset = (accost >=0))
-compl$ll <- compl$depth - compl$top
+# Calculate horizonal length as "ll"
+data$ll <- with(data, depth-top)
 
-# Fit results
-cdrill <- lm(log(adcost)~depth, drill)
-ccompl <- lm(accost~ll, compl)
+# Get subset of wells that have both drilling and completion costs
+data <- subset(data, subset = (adcost >=0 & accost >= 0))
 
-# Plot results
-x <- seq(1e3, 13e3, 100)
-yd <- exp(cdrill$coefficients[2]*x+cdrill$coefficients[1])
-yc <- ccompl$coefficients[2]*x+ccompl$coefficients[1]
 
-# Drilling
-pdf(file.path(path$BCfig, "Figure 11-3 Drill cost.pdf"))
-plot(drill$depth, drill$adcost/1e6,
-     #xlim = c(7e3, 12e3),
-     #ylim = c(0, 4e3),
-     xlab = "Well Length (feet)",
-     ylab = "Drilling Cost (millions of 2014 USD)")
-lines(x, yd/1e6, col = "red")
-dev.off()
+# tDrill ------------------------------------------------------------------
 
-# Completion
-pdf(file.path(path$BCfig, "Figure 11-4 Completion cost.pdf"))
-plot(compl$depth-compl$top, compl$accost/1e6,
-     #xlim = c(3e3, 12e3),
-     #ylim = c(0, 8),
-     xlab = "Lateral Length (feet)",
-     ylab = "Completion Cost (millions of 2014 USD)")
-lines(x, yc/1e6, col = "red")
-dev.off()
+# Use SQL query to get subset of horizontal wells
+p <- sqldf("select distinct p_api, h_spud_dry, h_compl_date, h_td_md
+           from production
+           where w_dir_horiz = 'H'")
+
+# Only wells within last 5 years
+p <- p[p$h_spud_dry >= as.Date("2010-01-01"),]
+
+# Calculate time difference
+p$dt <- as.numeric(difftime(p$h_compl_date, p$h_spud_dry, units = "days"))
+
+# Drop rows with NA or negative values on dt
+p <- p[p$dt >= 0,]
+p <- p[!is.na(p$dt),]
+
+# Calculate median full data set
+tDrill <- round(median(p$dt, na.rm = T))
+
+# # Subset to just drilling and completion
+# drill <- subset(data, subset = (adcost >=0))
+# compl <- subset(data, subset = (accost >=0))
+# compl$ll <- compl$depth - compl$top
+#
+# # Fit results
+# cdrill <- lm(log(adcost)~depth, drill)
+# ccompl <- lm(accost~ll, compl)
+#
+# # Plot results
+# x <- seq(1e3, 13e3, 100)
+# yd <- exp(cdrill$coefficients[2]*x+cdrill$coefficients[1])
+# yc <- ccompl$coefficients[2]*x+ccompl$coefficients[1]
+#
+# # Drilling
+# pdf(file.path(path$BCfig, "Figure 11-3 Drill cost.pdf"))
+# plot(drill$depth, drill$adcost/1e6,
+#      #xlim = c(7e3, 12e3),
+#      #ylim = c(0, 4e3),
+#      xlab = "Well Length (feet)",
+#      ylab = "Drilling Cost (millions of 2014 USD)")
+# lines(x, yd/1e6, col = "red")
+# dev.off()
+#
+# # Completion
+# pdf(file.path(path$BCfig, "Figure 11-4 Completion cost.pdf"))
+# plot(compl$depth-compl$top, compl$accost/1e6,
+#      #xlim = c(3e3, 12e3),
+#      #ylim = c(0, 8),
+#      xlab = "Lateral Length (feet)",
+#      ylab = "Completion Cost (millions of 2014 USD)")
+# lines(x, yc/1e6, col = "red")
+# dev.off()
 
 # Save fit
 save(file = file.path(path$data, "hdrill.rda"), list = c("cdrill", "ccompl"))
