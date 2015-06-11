@@ -20,10 +20,19 @@
 
 # Description -------------------------------------------------------------
 
-# blah
+# This script loads the DOGM production database and *.csv file exported from
+# well reports at:
+
+# https://docs.google.com/spreadsheets/d/1mZ0RNMPnydX1Ql4Pv7K_DyTRI276AOG333bssy_svB8/edit?usp=sharing
+
+# The function then adjusts costs for inflation, builds a set of costs for which
+# both completion and drilling costs are available, determines the amount of
+# time that has elapsed between spudding and first completion for all
+# horizontally drilled wells in Utah since 2010, and then plots and exports the
+# statistics related to those results.
 
 
-# Function ----------------------------------------------------------------
+# Drilling and Completion Costs -------------------------------------------
 
 # Load required *.csv and *.rda data files
 data <- read.csv(file.path(path$raw, "hD&C costs.csv"))
@@ -44,7 +53,6 @@ names(compl) <- c("p_api", "rdate")
 
 # Round to nearest month
 compl$rdate <- as.Date(as.yearmon(compl$rdate))
-
 
 # Merge with CPI data
 data <- merge(x = data, y = compl, by.x = "api", by.y = "p_api", all.x = T)
@@ -82,39 +90,38 @@ p <- p[!is.na(p$dt),]
 # Calculate median full data set
 tDrill <- round(median(p$dt, na.rm = T))
 
-# # Subset to just drilling and completion
-# drill <- subset(data, subset = (adcost >=0))
-# compl <- subset(data, subset = (accost >=0))
-# compl$ll <- compl$depth - compl$top
-#
-# # Fit results
-# cdrill <- lm(log(adcost)~depth, drill)
-# ccompl <- lm(accost~ll, compl)
-#
-# # Plot results
-# x <- seq(1e3, 13e3, 100)
-# yd <- exp(cdrill$coefficients[2]*x+cdrill$coefficients[1])
-# yc <- ccompl$coefficients[2]*x+ccompl$coefficients[1]
-#
-# # Drilling
-# pdf(file.path(path$BCfig, "Figure 11-3 Drill cost.pdf"))
-# plot(drill$depth, drill$adcost/1e6,
-#      #xlim = c(7e3, 12e3),
-#      #ylim = c(0, 4e3),
-#      xlab = "Well Length (feet)",
-#      ylab = "Drilling Cost (millions of 2014 USD)")
-# lines(x, yd/1e6, col = "red")
-# dev.off()
-#
-# # Completion
-# pdf(file.path(path$BCfig, "Figure 11-4 Completion cost.pdf"))
-# plot(compl$depth-compl$top, compl$accost/1e6,
-#      #xlim = c(3e3, 12e3),
-#      #ylim = c(0, 8),
-#      xlab = "Lateral Length (feet)",
-#      ylab = "Completion Cost (millions of 2014 USD)")
-# lines(x, yc/1e6, col = "red")
-# dev.off()
+
+# Plots -------------------------------------------------------------------
+
+# Drilling Time
+pdf(file.path(path$BCfig, "Figure 11-2 DCT vs Well Length.pdf"))
+plot(dt~h_td_md, p[p$h_td_md >0,],
+     xlim = c(6e3, 20e3),
+     ylim = c(0, 700),
+     xlab = "Well Length (feet)",
+     ylab = "Drilling and Completion Time (days)")
+grid(lty = 1)
+dev.off()
+
+# Drilling & Completion Costs
+pdf(file.path(path$BCfig, "Figure 11-3 Well Cost.pdf"))
+plot(data$depth, (data$adcost+data$accost)/1e6,
+     xlim = c(7e3, 12e3),
+     ylim = c(1, 7),
+     xlab = "Well Length (feet)",
+     ylab = "Well Drilling and Completion Cost (millions of 2014 USD)")
+grid(lty = 1)
+dev.off()
+
+
+# Export min/max results for LHS ------------------------------------------
+
+statR <- data.frame(depth.min =  min(p$h_td_md[p$h_td_md > 0], na.rm = T),
+                    depth.max =  max(p$h_td_md[p$h_td_md > 0], na.rm = T),
+                    cost.min =   min(with(data, accost+adcost)),
+                    cost.max =   max(with(data, accost+adcost)),
+                    tdrill.min = min(p$dt[p$h_td_md >0]),
+                    tdrill.max = max(p$dt[p$h_td_md >0]))
 
 # Save fit
-save(file = file.path(path$data, "hdrill.rda"), list = c("cdrill", "ccompl"))
+save(file = file.path(path$data, "hdrill.rda"), list = c("statR"))
