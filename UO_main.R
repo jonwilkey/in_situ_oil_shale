@@ -19,13 +19,12 @@ path <- NULL
 # Path switch - uncomment and/or replace with the path directory for your local
 # copy of the Git repository and Dropbox files.
 
-# Windows
-pwd.drop <- "D:/"
-pwd.git  <- "C:/Users/Jon/Documents/R/"
-
-# # Mac
-# pwd.drop <- "/Users/john/"
+# pwd.drop <- "D:/"                       # Windows
+# pwd.git  <- "C:/Users/Jon/Documents/R/"
+# pwd.drop <- "/Users/john/"              # Mac
 # pwd.git  <- "/Users/john/Documents/"
+pwd.drop <- "~/"                        # Linux
+pwd.git  <- "~/Documents/R Projects/"
 
 # Define paths.
 # "raw"  is raw data (*.dbf files from DOGM, *.csv files, etc.).
@@ -40,6 +39,7 @@ path$plot  <- paste(pwd.drop, "Dropbox/Oil Shale/Plots", sep = "")
 path$work  <- paste(pwd.git,  "oilshale/", sep = "")
 path$fun   <- paste(pwd.git,  "oilshale/Functions", sep = "")
 path$BCfig <- paste(pwd.drop, "Dropbox/Oil Shale/Book Chapter/Figures", sep = "")
+path$Cdata <- paste(pwd.drop, "Dropbox/CLEAR/DOGM Data/Prepared Data", sep = "")
 
 # Remove temporary path objects
 remove(pwd.drop, pwd.git)
@@ -190,24 +190,38 @@ ccs <- fcap(capheat, capPSS, capU, oil, capwell)
 
 # DCF Analysis ------------------------------------------------------------
 
-# Build timing data.frame with all terms in CF equation
-model <- data.frame(time = 1:(tdesign+tconstr+length(oil)))
+# Make model data.frame
+model <- data.frame(# Total Depreciable Capital
+                    CTDC = c(rep(x = -ccs$TDC/(tdesign+tconstr), times = tdesign+tconstr),
+                             rep(x = 0,                          times = length(oil))),
 
-# Add capital costs column
-model$CTDC <- c(rep(ccs$TDC/(tdesign+tconstr), ((tdesign+tconstr))), rep(0, length())
+                    # Design Capital
+                    CD =   c(rep(x = -(ccs$Land+ccs$Permit)/tdesign, times = tdesign),
+                             rep(x = 0,                              times = tconstr+length(oil))),
 
-# Build discount factor vector
-df <- NULL
-n <- 0
-while(length(df) < nrow(model)) {
+                    # Well Drilling and Completion Capital
+                    CWD =  c(rep(x = 0, times = tdesign),
+                             -capwell,
+                             rep(0,     times = length(oil))),
 
-  df <- c(df, rep(1/((1+uopt$parR$IRR[1])^n), 365)) # replace 1 with i in for-loop
-  n <- n+1
-}
+                    # Startup Capital
+                    CSt =  c(rep(x = 0, times = tdesign+tconstr),
+                             -(ccs$RIP+ccs$Start),
+                             rep(x = 0, times = length(oil)-1)),
+
+                    # Working Capital
+                    CWC =  c(rep(x = 0, times = tdesign+tconstr),
+                             -ccs$WC,
+                             rep(x = 0, times = length(oil)-2),
+                             ccs$WC),
+                    Gas = c(rep(x = 0, times = tdesign+tconstr),
+                            oil*uopt$convert.otg*with(uopt$parR, gp[j]*xg[j])))
+
+# Build discount factor vector, first by going long...
+df <- 1/((1+uopt$parR$IRR[j])^floor((1:(50*365))/365))
+
+# ... then selecting only up to the end of the model
 model$df <- df[1:nrow(model)]
-
-model$capwell <- c(capwell, rep(0, nrow(model)-length(capwell)))
-model$capheat <- c(rep(0, nrow(model)-length(oil)), capheat)
 model$oil <-     c(rep(0, nrow(model)-length(oil)), oil)
 
 

@@ -19,7 +19,7 @@ uopt <- NULL
 # One-time analysis functions ---------------------------------------------
 
 # Uncomment and rerun if desired
-# source(file.path(path$fun, "hdrill cost.R")) # Determines tDrill, well cost, well length info
+# source(file.path(path$fun, "parDataAnalysis.R.R")) # Determines tDrill, well cost, well length, and gas price info
 
 
 # Parameter Space Generation ----------------------------------------------
@@ -36,7 +36,7 @@ uopt$parR <- data.frame(tDrill =   c(112,   qunif(parLHS[,1], min = 38,    max =
                         well.cap = c(3.5e6, qunif(parLHS[,2], min = 1.9e6, max = 6.6e6)),
                         totalL =   c(10450, qunif(parLHS[,3], min = 6420,  max = 19580)),
                         xg =       c(0.2,   qunif(parLHS[,4], min = 0,     max = 0.4)),
-                        gp =       c(3,     qunif(parLHS[,5], min = 2,     max = 6)),
+                        gp =       c(3.80,  qunif(parLHS[,5], min = 1.84,  max = 5.87)),
                         IRR =      c(0.15,  qunif(parLHS[,6], min = 0.1,   max = 0.4)))
 
 # Remove LHS
@@ -45,7 +45,7 @@ remove(parLHS)
 
 # Index Values ------------------------------------------------------------
 
-# CPI value for inflation adjustment
+# CPI value for inflation adjustment (average 2014 USD)
 uopt$cpi <- 236.736
 
 
@@ -68,12 +68,18 @@ uopt$wellDesign <- data.frame(turnrate =   3,    # Turning rate (deg./pipe)
 uopt$nrig <- 14
 
 
+# Product properties ------------------------------------------------------
+
+# Conversion factor for mass equilvalency of oil to gas
+# Forumula:         (density oil / density gas) * (conversion factor bbl to MCF)
+uopt$convert.otg <- (853/(0.59*1.2))*(35.3147/6.2898/1e3)
+
+
 # Heater Options ----------------------------------------------------------
 
 # Base design
 uopt$heatcost <-    90e3*(uopt$cpi/218.056) # Base cost, inflation adjusted from 2010
 uopt$heatBlength <- 1936                    # Base length (ft)
-uopt$gencost <-     1100*(uopt$cpi/232.957) # Base cost per kW capacity, inflation adjusted from 2013
 
 
 # Production, separation, and storage Options -----------------------------
@@ -97,16 +103,12 @@ uopt$opPSSbase <-  100
 # Data from EIA Average retail price of electricity to ultimate customers: http://www.eia.gov/electricity/data.cfm#sales
 uopt$ep <- 0.0607
 
-# Gas Price (2014 USD per MCF)
-uopt$gp <- mean(5.62,6.57,6.35,5.78,5.67,5.39,5.35,4.88,4.95,4.96,4.93,5.53)
-
 # Electrity infrastructure
 uopt$eline <-   425e3*(uopt$cpi/232.957) # Line cost ($/mi)
 uopt$eswitch <- 10e3*(uopt$cpi/232.957)  # Switching gear and tap ($/mi)
 
 # Distance to nearest utility hub (mi)
 uopt$hubL <- 50
-
 
 
 # Finance and Econ Terms --------------------------------------------------
