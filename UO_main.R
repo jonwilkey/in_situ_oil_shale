@@ -76,19 +76,6 @@ options(stringsAsFactors=FALSE)
 source("UO_options.R")
 
 
-# # X.X Drilling Cost Fitting -----------------------------------------------
-#
-# # Update drilling and completion costs?
-# if (uopt$update.hdrill == T) {source(file.path(path$fun, "hdrill cost.R"))}
-#
-# # Update drilling time?
-# if (uopt$update.tDrill == T) {source(file.path(path$fun, "tDrill.R"))}
-#
-# # Load results
-# load(file.path(path$data, "hdrill.rda"))
-# load(file.path(path$data, "tDrill.rda"))
-
-
 # 2.0 Read in simulation data ---------------------------------------------
 
 # Use read.csv to read simulation data. Assuming that all the *.csv files have
