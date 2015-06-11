@@ -34,6 +34,7 @@ fcap <- function(capheat, capPSS, capU, oil, capwell) {
   ccs <- data.frame(TBM = sum(capheat)+sum(capPSS))        # Total bare module investment
   ccs$Site <-   0.1*ccs$TBM                                # Site preparation
   ccs$Serv <-   0.1*ccs$TBM                                # Service facilities
+  ccs$capU <-   capU                                       # Utility plants/connections
   ccs$DPI <-    with(ccs, TBM+Site+Serv+capU)              # Direct permanent investment
   ccs$Cont <-   0.18*ccs$DPI                               # Contigency and contractor fees
   ccs$TDC <-    with(ccs, DPI+Cont)                        # Total depreciable capital
