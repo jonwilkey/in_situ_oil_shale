@@ -35,7 +35,7 @@ load(file.path(path$data, "parLHS.rda"))
 uopt$parR <- data.frame(tDrill =   c(112,   qunif(parLHS[,1], min = 38,    max = 657)),
                         well.cap = c(3.5e6, qunif(parLHS[,2], min = 1.9e6, max = 6.6e6)),
                         totalL =   c(10450, qunif(parLHS[,3], min = 6420,  max = 19580)),
-                        xg =       c(0.2,   qunif(parLHS[,4], min = 0,     max = 0.4)),
+                        xg =       c(0.2,   qunif(parLHS[,4], min = 0,     max = 0.5)),
                         gp =       c(3.80,  qunif(parLHS[,5], min = 1.84,  max = 5.87)),
                         IRR =      c(0.15,  qunif(parLHS[,6], min = 0.1,   max = 0.4)))
 
@@ -61,8 +61,7 @@ uopt$base.prod <- 5*3.28084
 uopt$wellDesign <- data.frame(turnrate =   3,    # Turning rate (deg./pipe)
                               pipelength = 30,   # Pipe segment length (ft)
                               angle =      90,   # Total turn angle (deg.)
-                              TVD =        2500, # True vertical depth (ft)
-                              totalL =     11e3) # Total length (ft) - NOTE cannot exceed 5 mi (length of deposit)
+                              TVD =        2500) # True vertical depth (ft)
 
 # Number of rigs
 uopt$nrig <- 14
@@ -88,13 +87,21 @@ uopt$heatBlength <- 1936                    # Base length (ft)
 # here:
 # http://www.eia.gov/pub/oil_gas/natural_gas/data_publications/cost_indices_equipment_production/current/coststudy.html
 uopt$fcapPSS <- approxfun(x = c(2e3, 4e3, 8e3, 12e3),
-                          y = c(1178400, 1633700, 2584400, 3033100)*(uopt$cpi/214.537)/10)
+                          y = c(1178400, 1633700, 2584400, 3033100)*(uopt$cpi/214.537)/10,
+                          rule = 2)
 uopt$fopPSS <- approxfun(x = c(2e3, 4e3, 8e3, 12e3),
-                          y = c(255700, 285400, 394200, 555300)*(uopt$cpi/214.537)/10)
+                          y = c(255700, 285400, 394200, 555300)*(uopt$cpi/214.537)/10,
+                         rule = 2)
 
 # Base capacity of PSS (in BOPD)
 uopt$capPSSbase <- 200
 uopt$opPSSbase <-  100
+
+
+# Labor -------------------------------------------------------------------
+
+# Number of operators per shift
+uopt$Nopers <- 3
 
 
 # Utilities ---------------------------------------------------------------
@@ -116,6 +123,37 @@ uopt$hubL <- 50
 # Minimum construction time (in days)
 uopt$tconstr.min <- 365*9/12
 
+# ACRS 10-yr Depreciation Schedule
+uopt$fD <- c(rep(0.1000, 365),
+             rep(0.1800, 365),
+             rep(0.1440, 365),
+             rep(0.1152, 365),
+             rep(0.0922, 365),
+             rep(0.0737, 365),
+             rep(0.0655, 365),
+             rep(0.0655, 365),
+             rep(0.0656, 365),
+             rep(0.0655, 365),
+             rep(0.0328, 365))
 
+# Inflation rate (for adjusting NPV of Depreciation)
+uopt$inf <- 0.018
+
+# Royalties
+uopt$royalr <- 0.125
+
+# Severance taxes
+uopt$st.low <- 0.03
+uopt$st.high <- 0.05
+uopt$st.con <- 0.002
+uopt$st.cut.o <- 13
+uopt$st.cut.g <- 1.5
+
+# Income tax rates
+uopt$rTS <- 0.05
+uopt$rTF <- 0.35
+
+# Labor
+uopt$radmin.comp <- 0.0125
 
 
