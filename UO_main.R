@@ -81,24 +81,37 @@ source("UO_options.R")
 
 # 2.0 Read in simulation data ---------------------------------------------
 
-# Use read.csv to read simulation data. Assuming that all the *.csv files have
-# the same time index, create one data.frame out of all the data
-data <- data.frame(time =  read.csv(file.path(path$raw, "sample oil.csv"))[,1],
-                   coil =  read.csv(file.path(path$raw, "sample oil.csv"))[,2],
-                   power = read.csv(file.path(path$raw, "sample power.csv"))[,2],
-                   NER =   read.csv(file.path(path$raw, "sample NER.csv"))[,2])
+# Load from dataimport.R script
+load(file.path(path$data, "dataImport.rda"))
 
-# Unit conversions: time from seconds to days
-data$time <- data$time/3600/24
+# # Sample data set
+# # Use read.csv to read simulation data. Assuming that all the *.csv files have
+# # the same time index, create one data.frame out of all the data
+# data <- data.frame(time =  read.csv(file.path(path$raw, "sample oil.csv"))[,1],
+#                    coil =  read.csv(file.path(path$raw, "sample oil.csv"))[,2],
+#                    power = read.csv(file.path(path$raw, "sample power.csv"))[,2],
+#                    NER =   read.csv(file.path(path$raw, "sample NER.csv"))[,2])
+#
+# # Unit conversions: time from seconds to days
+# data$time <- data$time/3600/24
 
+# Concatonate parameter space with nwell vector
+temp1 <- data.frame(index = rep(1, times = length(nwell)), nwell, NER)
+temp2 <- data.frame(index = rep(1, times = nrow(uopt$parR)), uopt$parR)
+parR <- merge(x = temp1, y = temp2, all = T); remove(temp1, temp2)
+parR <- parR[,-1]
 
 
 # Loop --------------------------------------------------------------------
 
 # Predefine results space
-oilSP <- rep(0, times = nrow(uopt$parR))
+oilSP <- rep(0, times = nrow(parR))
+CPFB <-  oilSP
+TCI <-   oilSP
+Toil <-  oilSP
 
-for (j in 1:nrow(uopt$parR)) {
+# For each set of input parameter picks j
+for (j in 1:nrow(parR)) {
 
   # x.x Drilling ------------------------------------------------------------
 
@@ -106,18 +119,18 @@ for (j in 1:nrow(uopt$parR)) {
   wellL <- data.frame(turn = wtRadius(t = uopt$wellDesign$turnrate,
                                       p = uopt$wellDesign$pipelength,
                                       a = uopt$wellDesign$angle),
-                      total = uopt$parR$totalL[j])
+                      total = parR$totalL[j])
   wellL$stem <- uopt$wellDesign$TVD-wellL$turn
   wellL$prod <- wellL$total-(wellL$stem+wellL$turn)
 
   # Calculate well drilling schedule
-  drillsched <- rep(c(rep(0, uopt$parR$tDrill[j]-1), uopt$nrig), ceiling(uopt$nwell/uopt$nrig))
+  drillsched <- rep(c(rep(0, parR$tDrill[j]-1), uopt$nrig), ceiling(parR$nwell[j]/uopt$nrig))
 
   # If too many wells were drilled in last time step
-  if (sum(drillsched) > uopt$nwell) {
+  if (sum(drillsched) > parR$nwell[j]) {
 
     # Replace last entry with correct number of wells
-    drillsched[length(drillsched)] <- uopt$nwell-sum(drillsched[1:(length(drillsched)-1)])
+    drillsched[length(drillsched)] <- parR$nwell[j]-sum(drillsched[1:(length(drillsched)-1)])
   }
 
   # Design and construction time
@@ -125,32 +138,32 @@ for (j in 1:nrow(uopt$parR)) {
   tdesign <- round(tconstr/3)
 
   # Calculate capital cost for wells
-  capwell <- drillsched*uopt$parR$well.cap[j]
+  capwell <- drillsched*parR$well.cap[j]
 
 
   # Scale and Fit Base Data ------------------------------------
 
   # Scale data
-  coil <-  data$coil*(wellL$prod/uopt$base.prod)
-  power <- data$power*(wellL$prod/uopt$base.prod)
+  coil <-  dcoil[,(ceiling(j/nrow(uopt$parR))+1)]*(wellL$prod/uopt$base.prod)
+  power <- denergy[,(ceiling(j/nrow(uopt$parR))+1)]*(wellL$prod/uopt$base.prod)
 
   # Fit each oil/power data with approximation functions
-  fcoil <-  approxfun(x = data$time, y = coil, rule = 2)
-  fpower <- approxfun(x = data$time, y = power)
+  fcoil <-  approxfun(x = dcoil$time, y = coil, rule = 2)
+  fpower <- approxfun(x = denergy$time, y = power)
 
 
   # Heating -----------------------------------------------------------------
 
   # Heater capital cost
-  capheat <- uopt$nwell*uopt$heatcost*(wellL$prod/uopt$heatBlength)^1 # scale linearly?
+  capheat <- parR$nwell[j]*uopt$heatcost*(wellL$prod/uopt$heatBlength)^1 # scale linearly?
 
   # Heating operating cost calculation
   # Step 1: Calculate energy demand history
   E <- NULL
-  for (i in 1:(max(data$time)-1)) {
+  for (k in 1:(max(denergy$time)-1)) {
 
     # Itegrate heating demand
-    E <- c(E, integrate(fpower, i, i+1)$value)
+    E <- c(E, integrate(fpower, k, k+1)$value)
   }
 
   # Step 2: Multiply E by electricity price to get operating cost (also
@@ -160,12 +173,11 @@ for (j in 1:nrow(uopt$parR)) {
 
   # Oil Production ----------------------------------------------------------
 
-  # Calculate maximum potential oil production (xg = 0) on: (1) daily basis and
-  # (2) adjust to bbl from m^3
-  moil <- c(0, diff(fcoil(1:max(data$time))))*6.2898
+  # Calculate maximum potential oil production (xg = 0) on daily basis
+  moil <- c(0, diff(fcoil(1:max(dcoil$time))))
 
   # Calculate actual oil production
-  oil <- moil*(1-uopt$parR$xg[j])
+  oil <- moil*(1-parR$xg[j])
 
 
   # Production, separation, and storage -------------------------------------
@@ -174,7 +186,7 @@ for (j in 1:nrow(uopt$parR)) {
   #
   # capPSS = base(func. of length)*(new max oil/base max oil)^0.6*nwell
   #
-  capPSS <- uopt$fcapPSS(wellL$total)*(max(oil)/uopt$nwell/uopt$capPSSbase)^0.6*uopt$nwell
+  capPSS <- uopt$fcapPSS(wellL$total)*(max(oil)/parR$nwell[j]/uopt$capPSSbase)^0.6*parR$nwell[j]
 
   # Operating cost formula:
   #
@@ -214,7 +226,7 @@ for (j in 1:nrow(uopt$parR)) {
   # Well Drilling and Completion Capital
   model$CWD <- c(rep(x = 0, times = tdesign),
                  -capwell,
-                 rep(0,     times = length(oil)))
+                 rep(0,     times = nrow(model)-(tdesign+length(capwell))))
 
   # Startup Capital
   model$CSt <- c(rep(x = 0, times = tdesign+tconstr),
@@ -229,16 +241,16 @@ for (j in 1:nrow(uopt$parR)) {
 
   # Gas production
   model$gasp <- c(rep(x = 0, times = tdesign+tconstr),
-                  moil*uopt$convert.otg*uopt$parR$xg[j])
+                  moil*uopt$convert.otg*parR$xg[j])
 
   # Gas sales
-  model$gsale <- model$gasp*uopt$parR$gp[j]
+  model$gsale <- model$gasp*parR$gp[j]
 
   # Gas royalties
   model$rg <- -uopt$royalr*model$gsale
 
   # Gas severance taxes
-  stg <- -stax(prod = model$gasp, ep = uopt$parR$gp[j], uopt$royalr, uopt$st.low, uopt$st.high, uopt$st.con, uopt$st.cut.o)
+  stg <- -stax(prod = model$gasp, ep = parR$gp[j], uopt$royalr, uopt$st.low, uopt$st.high, uopt$st.con, uopt$st.cut.o)
 
   # PSS operating costs
   model$opPSS <- c(rep(x = 0, times = tdesign+tconstr),
@@ -264,12 +276,23 @@ for (j in 1:nrow(uopt$parR)) {
                     floor(((tdesign+tconstr+1):(tdesign+tconstr+length(oil)))/365)))
 
   # Discount factor
-  model$df <- 1/((1+uopt$parR$IRR[j])^floor((1:(tdesign+tconstr+length(oil)))/365))
+  model$df <- 1/((1+parR$IRR[j])^floor((1:(tdesign+tconstr+length(oil)))/365))
 
 
   # Solve for oil price -----------------------------------------------------
 
   # Oil Supply Price
-  oilSP[j] <- uniroot(NPV, lower = 10, upper = 1e5)$root
+  oilSP[j] <- uniroot(NPV, lower = 0, upper = 1e7)$root
+
+
+  # Save results ------------------------------------------------------------
+
+  # Total capital cost
+  Toil[j] <- sum(oil)
+  TCI[j] <-  ccs$TCI
+  CPFB[j] <- ccs$TCI/(Toil[j]/length(oil))
 }
 
+# ... and really save results
+results <- data.frame(parR, oilSP, Toil, TCI, CPFB)
+save(results, file = file.path(path$data, "UO_main Results v1.rda"))

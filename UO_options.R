@@ -19,8 +19,8 @@ uopt <- NULL
 # One-time analysis functions ---------------------------------------------
 
 # Uncomment and rerun if desired
-# source(file.path(path$fun, "parDataAnalysis.R.R")) # Determines tDrill, well cost, well length, and gas price info
-
+# source(file.path(path$fun, "parDataAnalysis.R")) # Determines tDrill, well cost, well length, and gas price info
+# source(file.path(path$fun, "dataimport.R")) # Reads in simulation energy, oil production, and nwell data
 
 # Parameter Space Generation ----------------------------------------------
 
@@ -37,7 +37,7 @@ uopt$parR <- data.frame(tDrill =   c(112,   qunif(parLHS[,1], min = 38,    max =
                         totalL =   c(10450, qunif(parLHS[,3], min = 6420,  max = 19580)),
                         xg =       c(0.2,   qunif(parLHS[,4], min = 0,     max = 0.5)),
                         gp =       c(3.80,  qunif(parLHS[,5], min = 1.84,  max = 5.87)),
-                        IRR =      c(0.15,  qunif(parLHS[,6], min = 0.1,   max = 0.4)))
+                        IRR =      c(0.15,  qunif(parLHS[,6], min = 0.10,  max = 0.40)))
 
 # Remove LHS
 remove(parLHS)
@@ -50,9 +50,6 @@ uopt$cpi <- 236.736
 
 
 # Well Options ------------------------------------------------------------
-
-# Number of wells
-uopt$nwell <- 133
 
 # Base well horizontal production length for simulation (in ft)
 uopt$base.prod <- 5*3.28084
@@ -121,7 +118,7 @@ uopt$hubL <- 50
 # Finance and Econ Terms --------------------------------------------------
 
 # Minimum construction time (in days)
-uopt$tconstr.min <- 365*9/12
+uopt$tconstr.min <- round(365*9/12)
 
 # ACRS 10-yr Depreciation Schedule
 uopt$fD <- c(rep(0.1000, 365),
