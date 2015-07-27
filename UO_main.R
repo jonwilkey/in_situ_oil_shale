@@ -68,6 +68,7 @@ for (f in flst) source(f); remove(f, flst)
 library(zoo)
 library(sqldf)
 library(lhs)
+library(beepr)
 
 
 # 1.4 Options -------------------------------------------------------------
@@ -96,7 +97,7 @@ load(file.path(path$data, "dataImport.rda"))
 # data$time <- data$time/3600/24
 
 # Concatonate parameter space with nwell vector
-temp1 <- data.frame(index = rep(1, times = length(nwell)), nwell, NER)
+temp1 <- data.frame(index = rep(1, times = length(nwell)), nwell, NER, TE)
 temp2 <- data.frame(index = rep(1, times = nrow(uopt$parR)), uopt$parR)
 parR <- merge(x = temp1, y = temp2, all = T); remove(temp1, temp2)
 parR <- parR[,-1]
@@ -109,6 +110,8 @@ oilSP <- rep(0, times = nrow(parR))
 CPFB <-  oilSP
 TCI <-   oilSP
 Toil <-  oilSP
+sTE <-   oilSP
+prodL <- oilSP
 
 # For each set of input parameter picks j
 for (j in 1:nrow(parR)) {
@@ -144,7 +147,7 @@ for (j in 1:nrow(parR)) {
   # Scale and Fit Base Data ------------------------------------
 
   # Scale data
-  coil <-  dcoil[,(ceiling(j/nrow(uopt$parR))+1)]*(wellL$prod/uopt$base.prod)
+  coil <-  dcoil[,(ceiling(j/nrow(uopt$parR))+1)]*(wellL$prod/uopt$base.prod)*parR$rec[j]
   power <- denergy[,(ceiling(j/nrow(uopt$parR))+1)]*(wellL$prod/uopt$base.prod)
 
   # Fit each oil/power data with approximation functions
@@ -165,6 +168,9 @@ for (j in 1:nrow(parR)) {
     # Itegrate heating demand
     E <- c(E, integrate(fpower, k, k+1)$value)
   }
+
+  # Convert from daily basis to hourly basis
+  E <- E*24
 
   # Step 2: Multiply E by electricity price to get operating cost (also
   # concatonate in an additional zero to fix length of E)
@@ -291,8 +297,13 @@ for (j in 1:nrow(parR)) {
   Toil[j] <- sum(oil)
   TCI[j] <-  ccs$TCI
   CPFB[j] <- ccs$TCI/(Toil[j]/length(oil))
+  sTE[j] <-  sum(E)
+  prodL[j] <- wellL$prod
 }
 
+# Sound off when loop is complete
+beep(3, message("Script Finished"))
+
 # ... and really save results
-results <- data.frame(parR, oilSP, Toil, TCI, CPFB)
-save(results, file = file.path(path$data, "UO_main Results v1.rda"))
+results <- data.frame(parR, oilSP, Toil, TCI, CPFB, sTE, prodL)
+save(results, file = file.path(path$data, "UO_main Results v4.rda"))

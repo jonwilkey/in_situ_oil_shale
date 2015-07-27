@@ -87,6 +87,14 @@ NER <- readWorksheetFromFile(file     = paste(path$raw, "/shale87designs.xlsx", 
                              endCol   = 0,
                              header   = TRUE)$NER..t.boe
 
+# Get Cumulative energy values from same spreadsheet
+TE <- readWorksheetFromFile(file     = paste(path$raw, "/shale87designs.xlsx", sep = ""),
+                            sheet    = "Sheet1",
+                            startRow = 4,
+                            startCol = 0,
+                            endRow   = 0,
+                            endCol   = 0,
+                            header   = TRUE)$Cummulative.Power.Requirements..kWh.
 
 # Export result
-save(denergy, dcoil, nwell, NER, file = file.path(path$data, "dataImport.rda"))
+save(denergy, dcoil, nwell, NER, TE, file = file.path(path$data, "dataImport.rda"))
