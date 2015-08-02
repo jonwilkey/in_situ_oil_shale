@@ -28,13 +28,11 @@
 library(XLConnect)
 
 # Define scenario number vector
-nscen <- c(2:51, 53:88)
+nscen <- c(2:104, 106:231, 233:240, 242:244)
 
 # Get initial energy/oil objects
-denergy <- read.csv(file.path(paste(path$raw, "/Processing", sep = ""),
-                             paste("instPower-", 1, ".csv", sep = "")))
-dcoil <- read.csv(file.path(paste(path$raw, "/Processing", sep = ""),
-                           paste("oil-", 1, ".csv", sep = "")))
+denergy <- read.csv(file.path(path$raw, paste("energy-", 1, ".csv", sep = "")))[,c(1,3)]
+dcoil <-   read.csv(file.path(path$raw, paste("prod-",   1, ".csv", sep = "")))[,c(1,5)]
 
 # Start name vectors
 ename <- c("time", "e1")
@@ -44,18 +42,16 @@ oname <- c("time", "o1")
 for (i in nscen) {
 
   # Read *.csv i
-  etemp <- read.csv(file.path(paste(path$raw, "/Processing", sep = ""),
-                              paste("instPower-", i, ".csv", sep = "")))
-  otemp <- read.csv(file.path(paste(path$raw, "/Processing", sep = ""),
-                              paste("oil-", i, ".csv", sep = "")))
+  etemp <- read.csv(file.path(path$raw, paste("energy-", i, ".csv", sep = "")))[,3]
+  otemp <- read.csv(file.path(path$raw, paste("prod-",   i, ".csv", sep = "")))[,5]
 
   # Add entry to name vector
   ename <- c(ename, paste("e", i, sep = ""))
   oname <- c(oname, paste("o", i, sep = ""))
 
   # Add column to data result
-  denergy <- cbind(denergy, etemp[,2])
-  dcoil <- cbind(dcoil, otemp[,2])
+  denergy <- cbind(denergy, etemp)
+  dcoil <- cbind(dcoil, otemp)
 }
 
 # Name change
@@ -66,35 +62,32 @@ names(dcoil) <-   oname
 denergy$time <- denergy$time/3600/24
 dcoil$time <-   dcoil$time/3600/24
 
-# Unit conversion: m^3 oil to bbl oil
-dcoil[,2:ncol(dcoil)] <- dcoil[,2:ncol(dcoil)]*6.2898
-
-# Get well counts from "shale87designs.xlsx"
-nwell <- readWorksheetFromFile(file     = paste(path$raw, "/shale87designs.xlsx", sep = ""),
-                               sheet    = "Sheet1",
-                               startRow = 4,
+# Get well counts from "combinedDesignTable.xlsx"
+nwell <- readWorksheetFromFile(file     = paste(path$raw, "/combinedDesignTable.xlsx", sep = ""),
+                               sheet    = "Final 242 Design Table",
+                               startRow = 1,
                                startCol = 0,
                                endRow   = 0,
                                endCol   = 0,
-                               header   = TRUE)$Counted.Number.of.Wells
+                               header   = TRUE)$Number.of.wells
 
 # Get NER values from same spreadsheet
-NER <- readWorksheetFromFile(file     = paste(path$raw, "/shale87designs.xlsx", sep = ""),
-                             sheet    = "Sheet1",
-                             startRow = 4,
+NER <- readWorksheetFromFile(file     = paste(path$raw, "/combinedDesignTable.xlsx", sep = ""),
+                             sheet    = "242designTable.csv",
+                             startRow = 1,
                              startCol = 0,
                              endRow   = 0,
                              endCol   = 0,
-                             header   = TRUE)$NER..t.boe
+                             header   = TRUE)$ner
 
 # Get Cumulative energy values from same spreadsheet
-TE <- readWorksheetFromFile(file     = paste(path$raw, "/shale87designs.xlsx", sep = ""),
-                            sheet    = "Sheet1",
-                            startRow = 4,
+TE <- readWorksheetFromFile(file     = paste(path$raw, "/combinedDesignTable.xlsx", sep = ""),
+                            sheet    = "242designTable.csv",
+                            startRow = 2,
                             startCol = 0,
                             endRow   = 0,
                             endCol   = 0,
-                            header   = TRUE)$Cummulative.Power.Requirements..kWh.
+                            header   = TRUE)$X.Maximum_Cum_Energy_kWh
 
 # Export result
 save(denergy, dcoil, nwell, NER, TE, file = file.path(path$data, "dataImport.rda"))

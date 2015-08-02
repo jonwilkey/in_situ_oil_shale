@@ -85,17 +85,6 @@ source("UO_options.R")
 # Load from dataimport.R script
 load(file.path(path$data, "dataImport.rda"))
 
-# # Sample data set
-# # Use read.csv to read simulation data. Assuming that all the *.csv files have
-# # the same time index, create one data.frame out of all the data
-# data <- data.frame(time =  read.csv(file.path(path$raw, "sample oil.csv"))[,1],
-#                    coil =  read.csv(file.path(path$raw, "sample oil.csv"))[,2],
-#                    power = read.csv(file.path(path$raw, "sample power.csv"))[,2],
-#                    NER =   read.csv(file.path(path$raw, "sample NER.csv"))[,2])
-#
-# # Unit conversions: time from seconds to days
-# data$time <- data$time/3600/24
-
 # Concatonate parameter space with nwell vector
 temp1 <- data.frame(index = rep(1, times = length(nwell)), nwell, NER, TE)
 temp2 <- data.frame(index = rep(1, times = nrow(uopt$parR)), uopt$parR)
@@ -179,11 +168,12 @@ for (j in 1:nrow(parR)) {
 
   # Oil Production ----------------------------------------------------------
 
-  # Calculate maximum potential oil production (xg = 0) on daily basis
+  # Calculate maximum potential oil production (xg = 0) on daily basis (note -
+  # units are in kg)
   moil <- c(0, diff(fcoil(1:max(dcoil$time))))
 
-  # Calculate actual oil production
-  oil <- moil*(1-parR$xg[j])
+  # Calculate actual oil (in bbl) = moil*(1-xg)/rho.oil*(6.2898 bbl/m^3)
+  oil <- moil*(1-parR$xg[j])/uopt$rho.oil*6.2898
 
 
   # Production, separation, and storage -------------------------------------
@@ -247,7 +237,7 @@ for (j in 1:nrow(parR)) {
 
   # Gas production
   model$gasp <- c(rep(x = 0, times = tdesign+tconstr),
-                  moil*uopt$convert.otg*parR$xg[j])
+                  moil*parR$xg[j]*uopt$convert.otg)
 
   # Gas sales
   model$gsale <- model$gasp*parR$gp[j]
@@ -306,4 +296,4 @@ beep(3, message("Script Finished"))
 
 # ... and really save results
 results <- data.frame(parR, oilSP, Toil, TCI, CPFB, sTE, prodL)
-save(results, file = file.path(path$data, "UO_main Results v4.rda"))
+save(results, file = file.path(path$data, "UO_main Results v5.rda"))
