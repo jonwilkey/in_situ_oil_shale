@@ -40,7 +40,7 @@ fcap <- function(capheat, capPSS, capU, oil, capwell) {
   ccs$TDC <-    with(ccs, DPI+Cont)                        # Total depreciable capital
   ccs$Land <-   0.02*ccs$TDC                               # Land
   ccs$Permit <- 0.1*sum(oil)                               # Permitting
-  ccs$RIP <-    0.1*ccs$TDC                                # Royalties for intellectual property
+  ccs$RIP <-    0.02*ccs$TDC                                # Royalties for intellectual property
   ccs$Start <-  0.1*ccs$TDC                                # Startup
   ccs$Wells <-  sum(capwell)                               # Wells
   ccs$TPI <-    with(ccs, TDC+Land+Permit+RIP+Start+Wells) # Total permanent investment

@@ -24,11 +24,8 @@
 
 # Script ------------------------------------------------------------------
 
-# Load XLConnect library (for reading in # of wells from Excel spreadsheet)
-library(XLConnect)
-
 # Define scenario number vector
-nscen <- c(2:104, 106:231, 233:240, 242:244)
+nscen <- c(2:242)
 
 # Get initial energy/oil objects
 denergy <- read.csv(file.path(path$raw, paste("energy-", 1, ".csv", sep = "")))[,c(1,3)]
@@ -62,32 +59,11 @@ names(dcoil) <-   oname
 denergy$time <- denergy$time/3600/24
 dcoil$time <-   dcoil$time/3600/24
 
-# Get well counts from "combinedDesignTable.xlsx"
-nwell <- readWorksheetFromFile(file     = paste(path$raw, "/combinedDesignTable.xlsx", sep = ""),
-                               sheet    = "Final 242 Design Table",
-                               startRow = 1,
-                               startCol = 0,
-                               endRow   = 0,
-                               endCol   = 0,
-                               header   = TRUE)$Number.of.wells
+# Get design table
+DT <- read.csv(file.path(path$raw, "242FinalDesignTable.csv"))
 
-# Get NER values from same spreadsheet
-NER <- readWorksheetFromFile(file     = paste(path$raw, "/combinedDesignTable.xlsx", sep = ""),
-                             sheet    = "242designTable.csv",
-                             startRow = 1,
-                             startCol = 0,
-                             endRow   = 0,
-                             endCol   = 0,
-                             header   = TRUE)$ner
-
-# Get Cumulative energy values from same spreadsheet
-TE <- readWorksheetFromFile(file     = paste(path$raw, "/combinedDesignTable.xlsx", sep = ""),
-                            sheet    = "242designTable.csv",
-                            startRow = 2,
-                            startCol = 0,
-                            endRow   = 0,
-                            endCol   = 0,
-                            header   = TRUE)$X.Maximum_Cum_Energy_kWh
+# Rename
+names(DT) <- c("design", "TE", "mKerogen", "nwell", "normNER")
 
 # Export result
-save(denergy, dcoil, nwell, NER, TE, file = file.path(path$data, "dataImport.rda"))
+save(denergy, dcoil, DT, file = file.path(path$data, "dataImport.rda"))

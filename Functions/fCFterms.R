@@ -1,5 +1,5 @@
 # Function Info -----------------------------------------------------------
-# Name:       fNPV.R (Net present value function)
+# Name:       fCFterms.R (Cash flow terms calculation function)
 # Author(s):  Jon Wilkey
 # Contact:    jon.wilkey@gmail.com
 
@@ -11,16 +11,18 @@
 
 # Outputs -----------------------------------------------------------------
 
-# Net present value (NPV)
+# Data.frame with terms necessary for calculating cash flow that are based on
+# oil price (primarily).
 
 
 # Description -------------------------------------------------------------
 
-# Calcualtes NPV as function of oil price
+# Calcualtes cash flow terms which are dependent on oil prices (for determining
+# $/bbl costs)
 
 
 # Function ----------------------------------------------------------------
-NPV <- function(op) {
+fCFterms <- function(op) {
 
   # Oil Sales
   osale <- model$oilp*op
@@ -44,11 +46,5 @@ NPV <- function(op) {
   NP <- osale+ro+sto+TS+TF+with(model, gsale+rg+stg+opPSS+opheat+fixed+CTDC+CD+CWD+CSt+CWC)
   admin.comp <- -uopt$radmin.comp*ifelse(NP > 0, NP, 0)
 
-  # Final cash flow
-  CF <- osale+ro+sto+TS+TF+admin.comp+with(model, gsale+rg+stg+opPSS+opheat+fixed+CTDC+CD+CWD+CSt+CWC)
-
-  # Final NPV
-  NPV <- sum(model$df*CF)
-
-  return(NPV)
+  return(data.frame(osale,ro,sto,TS,TF,admin.comp))
 }

@@ -20,7 +20,7 @@ uopt <- NULL
 
 # Uncomment and rerun if desired
 # source(file.path(path$fun, "parDataAnalysis.R")) # Determines tDrill, well cost, well length, and gas price info
-source(file.path(path$fun, "dataimport.R")) # Reads in simulation energy, oil production, and nwell data
+# source(file.path(path$fun, "dataimport.R")) # Reads in simulation energy, oil production, and nwell data
 
 # Parameter Space Generation ----------------------------------------------
 
@@ -37,8 +37,8 @@ uopt$parR <- data.frame(#tDrill =   qunif(parLHS[,1], min = 72,    max = 143),
                         well.cap = qunif(parLHS[,2], min = 1.9e6, max = 6.6e6), # Well capital cost
                         totalL =   qunif(parLHS[,3], min = 6420,  max = 19580), # Total well length (ft)
                         xg =       qunif(parLHS[,4], min = 0,     max = 0.5),   # Mass fraction gas
-                        gp =       qunif(parLHS[,5], min = 1.84,  max = 5.87),  # Gas price ($/MCF)
-                        IRR =      qunif(parLHS[,6], min = 0.10,  max = 0.40),  # Internal rate of return
+                        gp =       qunif(parLHS[,5], min = 0.00,  max = 5.87),  # Gas price ($/MCF)
+                        IRR =      qunif(parLHS[,6], min = 0.10,  max = 0.20),  # Internal rate of return
                         rec =      qunif(parLHS[,7], min = 0.4,   max = 0.8))   # Recovery fraction
 
 # Remove LHS
@@ -70,11 +70,11 @@ uopt$nrig <- 14
 
 # Conversion factor for mass equilvalency of oil to gas
 # Forumula:         (1 / density gas) * (conversion factor m^3 to MCF)
-uopt$convert.otg <- 1/(0.59*1.2)*(35.3147/1e3)
+uopt$convert.otg <- 1/(1.24)*(35.3147/1e3)
 
 # Density of oil
 # Formula :         (density of water @ 60F)*(141.5/(API gravity + 131.5))
-uopt$rho.oil <- 999.016*(141.5/(35+131.5))
+uopt$rho.oil <- 998.2071*(141.5/(36+131.5))
 
 
 # Heater Options ----------------------------------------------------------
@@ -114,8 +114,8 @@ uopt$Nopers <- 3
 uopt$ep <- 0.0607
 
 # Electrity infrastructure
-uopt$eline <-   425e3*(uopt$cpi/232.957) # Line cost ($/mi)
-uopt$eswitch <- 10e3*(uopt$cpi/232.957)  # Switching gear and tap ($/mi)
+uopt$eline <-   425e3*(uopt$cpi/229.594) # Line cost ($/mi)
+uopt$eswitch <- 10e3*(uopt$cpi/229.594)  # Switching gear and tap ($/mi)
 
 # Distance to nearest utility hub (mi)
 uopt$hubL <- 50
@@ -139,9 +139,6 @@ uopt$fD <- c(rep(0.1000, 365),
              rep(0.0655, 365),
              rep(0.0328, 365))
 
-# Inflation rate (for adjusting NPV of Depreciation)
-uopt$inf <- 0.018
-
 # Royalties
 uopt$royalr <- 0.125
 
@@ -158,5 +155,3 @@ uopt$rTF <- 0.35
 
 # Labor
 uopt$radmin.comp <- 0.0125
-
-

@@ -1,4 +1,7 @@
-load(file.path(path$data, "UO_main Results v3.rda"))
+load(file.path(path$data, "UO_main Results v8.rda"))
+
+
+# Base graphics - Scatterplots --------------------------------------------
 
 pdf(file.path(path$plot, "ISv4 Results.pdf"))
 
@@ -111,3 +114,53 @@ points(rbind(aggregate(r$oilSP, list(r$rec), max),
        col = "red", pch = 19)
 
 dev.off()
+
+
+# ggplot2 Graphics --------------------------------------------------------
+
+# Alpha-blended scatterplots
+pdf(file.path(path$plot, "ISS v8 scatterplots.pdf"))
+
+ggplot(r, aes(x = nwell,    y = oilSP)) + geom_point(alpha = 0.3) + theme_bw()
+ggplot(r, aes(x = NER,      y = oilSP)) + geom_point(alpha = 0.3) + theme_bw()
+ggplot(r, aes(x = tDrill,   y = oilSP)) + geom_point(alpha = 0.3) + theme_bw()
+ggplot(r, aes(x = well.cap, y = oilSP)) + geom_point(alpha = 0.3) + theme_bw()
+ggplot(r, aes(x = totalL,   y = oilSP)) + geom_point(alpha = 0.3) + theme_bw()
+ggplot(r, aes(x = xg,       y = oilSP)) + geom_point(alpha = 0.3) + theme_bw()
+ggplot(r, aes(x = rec,      y = oilSP)) + geom_point(alpha = 0.3) + theme_bw()
+ggplot(r, aes(x = gp,       y = oilSP)) + geom_point(alpha = 0.3) + theme_bw()
+ggplot(r, aes(x = IRR,      y = oilSP)) + geom_point(alpha = 0.3) + theme_bw()
+
+dev.off()
+
+# Hexbins
+pdf(file.path(path$plot, "ISS v8 hexbins.pdf"))
+
+ggplot(r, aes(x = nwell,    y = oilSP)) + stat_binhex() + scale_fill_gradientn(colours = c("lightgrey","black")) + theme_bw()
+ggplot(r, aes(x = NER,      y = oilSP)) + stat_binhex() + scale_fill_gradientn(colours = c("lightgrey","black")) + theme_bw()
+ggplot(r, aes(x = tDrill,   y = oilSP)) + stat_binhex() + scale_fill_gradientn(colours = c("lightgrey","black")) + theme_bw()
+ggplot(r, aes(x = well.cap, y = oilSP)) + stat_binhex() + scale_fill_gradientn(colours = c("lightgrey","black")) + theme_bw()
+ggplot(r, aes(x = totalL,   y = oilSP)) + stat_binhex() + scale_fill_gradientn(colours = c("lightgrey","black")) + theme_bw()
+ggplot(r, aes(x = xg,       y = oilSP)) + stat_binhex() + scale_fill_gradientn(colours = c("lightgrey","black")) + theme_bw()
+ggplot(r, aes(x = rec,      y = oilSP)) + stat_binhex() + scale_fill_gradientn(colours = c("lightgrey","black")) + theme_bw()
+ggplot(r, aes(x = gp,       y = oilSP)) + stat_binhex() + scale_fill_gradientn(colours = c("lightgrey","black")) + theme_bw()
+ggplot(r, aes(x = IRR,      y = oilSP)) + stat_binhex() + scale_fill_gradientn(colours = c("lightgrey","black")) + theme_bw()
+
+dev.off()
+
+# Histogram
+pdf(file.path(path$plot, "ISS v8 hist.pdf"))
+
+ggplot(r, aes(x = nwell)) +    geom_histogram(aes(y=..density..),binwidth = 1, colour = "black", fill = "white") + theme_bw() + geom_density(alpha = 0.2, fill = "lightgrey")
+ggplot(r, aes(x = NER)) +      geom_histogram(aes(y=..density..), colour = "black", fill = "white") + theme_bw() + geom_density(alpha = 0.2, fill = "lightgrey")
+ggplot(r, aes(x = tDrill)) +   geom_histogram(aes(y=..density..), colour = "black", fill = "white") + theme_bw() + geom_density(alpha = 0.2, fill = "lightgrey")
+ggplot(r, aes(x = well.cap)) + geom_histogram(aes(y=..density..), colour = "black", fill = "white") + theme_bw() + geom_density(alpha = 0.2, fill = "lightgrey")
+ggplot(r, aes(x = totalL)) +   geom_histogram(aes(y=..density..), colour = "black", fill = "white") + theme_bw() + geom_density(alpha = 0.2, fill = "lightgrey")
+ggplot(r, aes(x = xg)) +       geom_histogram(aes(y=..density..), colour = "black", fill = "white") + theme_bw() + geom_density(alpha = 0.2, fill = "lightgrey")
+ggplot(r, aes(x = rec)) +      geom_histogram(aes(y=..density..), colour = "black", fill = "white") + theme_bw() + geom_density(alpha = 0.2, fill = "lightgrey")
+ggplot(r, aes(x = gp)) +       geom_histogram(aes(y=..density..), colour = "black", fill = "white") + theme_bw() + geom_density(alpha = 0.2, fill = "lightgrey")
+ggplot(r, aes(x = IRR)) +      geom_histogram(aes(y=..density..), colour = "black", fill = "white") + theme_bw() + geom_density(alpha = 0.2, fill = "lightgrey")
+
+dev.off()
+
+# Density

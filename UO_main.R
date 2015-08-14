@@ -19,8 +19,8 @@ path <- NULL
 # Path switch - uncomment and/or replace with the path directory for your local
 # copy of the Git repository and Dropbox files.
 
-pwd.drop <- "D:/"                       # Windows
-pwd.git  <- "C:/Users/Jon/Documents/R/"
+pwd.drop <- "C:/Users/jonwi/"                       # Windows
+pwd.git  <- "C:/Users/jonwi/Documents/R/"
 # pwd.drop <- "/Users/john/"              # Mac
 # pwd.git  <- "/Users/john/Documents/"
 # pwd.drop <- "~/"                        # Linux
@@ -57,6 +57,7 @@ flst <- file.path(path$fun, c("wtRadius.R",
                               "ffoc.R",
                               "stax.R",
                               "fNPV.R",
+                              "asYear.R",
                               "clipboard.R"))
 
 # Load each function in list then remove temporary file list variables
@@ -69,6 +70,7 @@ library(zoo)
 library(sqldf)
 library(lhs)
 library(beepr)
+library(ggplot2)
 
 
 # 1.4 Options -------------------------------------------------------------
@@ -86,7 +88,7 @@ source("UO_options.R")
 load(file.path(path$data, "dataImport.rda"))
 
 # Concatonate parameter space with nwell vector
-temp1 <- data.frame(index = rep(1, times = length(nwell)), nwell, NER, TE)
+temp1 <- data.frame(index = rep(1, times = nrow(DT)), DT)
 temp2 <- data.frame(index = rep(1, times = nrow(uopt$parR)), uopt$parR)
 parR <- merge(x = temp1, y = temp2, all = T); remove(temp1, temp2)
 parR <- parR[,-1]
@@ -101,6 +103,9 @@ TCI <-   oilSP
 Toil <-  oilSP
 sTE <-   oilSP
 prodL <- oilSP
+
+# Progress Bar (since this next for-loop takes a while)
+pb <- txtProgressBar(min = 0, max = nrow(parR), width = 75, style = 3)
 
 # For each set of input parameter picks j
 for (j in 1:nrow(parR)) {
@@ -246,7 +251,13 @@ for (j in 1:nrow(parR)) {
   model$rg <- -uopt$royalr*model$gsale
 
   # Gas severance taxes
-  stg <- -stax(prod = model$gasp, ep = parR$gp[j], uopt$royalr, uopt$st.low, uopt$st.high, uopt$st.con, uopt$st.cut.o)
+  model$stg <- -stax(prod =    model$gasp,
+                     ep =      parR$gp[j],
+                     royalr =  uopt$royalr,
+                     st.low =  uopt$st.low,
+                     st.high = uopt$st.high,
+                     st.con =  uopt$st.con,
+                     st.cut =  uopt$st.cut.g)
 
   # PSS operating costs
   model$opPSS <- c(rep(x = 0, times = tdesign+tconstr),
@@ -266,10 +277,7 @@ for (j in 1:nrow(parR)) {
 
   # Depreciation
   model$D <- c(rep(x = 0, times = tdesign+tconstr),
-               -ccs$TDC/365*
-                 uopt$fD[1:length(oil)]/
-                 ((1+uopt$inf)^
-                    floor(((tdesign+tconstr+1):(tdesign+tconstr+length(oil)))/365)))
+               -ccs$TDC/365*uopt$fD[1:length(oil)])
 
   # Discount factor
   model$df <- 1/((1+parR$IRR[j])^floor((1:(tdesign+tconstr+length(oil)))/365))
@@ -281,19 +289,59 @@ for (j in 1:nrow(parR)) {
   oilSP[j] <- uniroot(NPV, lower = 0, upper = 1e7)$root
 
 
+  # Calculate $/bbl cash flows ----------------------------------------------
+
+  # Capital cost fractions
+  fc.heat[j] <-   capheat/ccs$TCI
+  fc.PSS[j] <-    capPSS/ccs$TCI
+  fc.site[j] <-   with(ccs, Site/TCI)
+  fc.serv[j] <-   with(ccs, Serv/TCI)
+  fc.util[j] <-   with(ccs, capU/TCI)
+  fc.cont[j] <-   with(ccs, Cont/TCI)
+  fc.land[j] <-   with(ccs, Land/TCI)
+  fc.permit[j] <- with(ccs, Permit/TCI)
+  fc.RIP[j] <-    with(ccs, RIP/TCI)
+  fc.start[j] <-  with(ccs, Start/TCI)
+  fc.wells[j] <-  with(ccs, Wells/TCI)
+  fc.WC[j] <-     with(ccs, WC/TCI)
+
+  # Run fCFterms function to get terms in cash flow equation that depend on oil
+  CF <- fCFterms(oilSP[j])
+
+  # Per barrel
+  pb.cap[j] <-  with(model, sum(CTDC+CD+CWD+CSt+CWC))/sum(oil)                   # Capital
+  pb.loai[j] <- (sum(model$fixed)+sum(0.01*ccs$TPI)+sum(CF$admin.comp))/sum(oil) # Labor, maint., overhead, admin salary + comp, insurance
+  pb.rstp[j] <- (sum(with(CF, ro+sto+TS+TF))+sum(with(model, rg+stg))-sum(0.01*ccs$TPI))/sum(oil)
+  pb.royl[j] <- (sum(CF$ro)+sum(model$rg))/sum(oil)
+  pb.tfts[j] <- (sum(with(CF, TS+TF)))/sum(oil)
+  pb.heat[j] <- sum(model$opheat)/sum(oil)
+  pb.opPS[j] <- sum(model$opPSS)/sum(oil)
+  pb.prof[j] <- sum(CF$osale)/sum(oil)+pb.cap+pb.loai+pb.rstp+pb.heat+pb.opPS
+
+
   # Save results ------------------------------------------------------------
 
   # Total capital cost
   Toil[j] <- sum(oil)
+  Tgas[j] <- sum(gasp)
   TCI[j] <-  ccs$TCI
   CPFB[j] <- ccs$TCI/(Toil[j]/length(oil))
   sTE[j] <-  sum(E)
   prodL[j] <- wellL$prod
+  NER[j] <-   (moil*(1-parR$xg[j])*uopt$eoil+moil*parR$xg[j]*uopt$egas)/(sTE)
+
+
+  # Update progress bar
+  Sys.sleep(1e-3)
+  setTxtProgressBar(pb, j)
 }
+
+# Close progress bar
+close(pb)
 
 # Sound off when loop is complete
 beep(3, message("Script Finished"))
 
 # ... and really save results
 results <- data.frame(parR, oilSP, Toil, TCI, CPFB, sTE, prodL)
-save(results, file = file.path(path$data, "UO_main Results v5.rda"))
+save(results, file = file.path(path$data, "UO_main Results v8.rda"))
