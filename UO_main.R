@@ -57,6 +57,7 @@ flst <- file.path(path$fun, c("wtRadius.R",
                               "ffoc.R",
                               "stax.R",
                               "fNPV.R",
+                              "fCFterms.R",
                               "asYear.R",
                               "clipboard.R"))
 
@@ -97,12 +98,36 @@ parR <- parR[,-1]
 # Loop --------------------------------------------------------------------
 
 # Predefine results space
-oilSP <- rep(0, times = nrow(parR))
-CPFB <-  oilSP
-TCI <-   oilSP
-Toil <-  oilSP
-sTE <-   oilSP
-prodL <- oilSP
+oilSP <-     rep(0, times = nrow(parR))
+CPFB <-      oilSP
+TCI <-       oilSP
+Toil <-      oilSP
+sTE <-       oilSP
+prodL <-     oilSP
+Tgas <-      oilSP
+NER <-       oilSP
+fc.heat <-   oilSP
+fc.PSS <-    oilSP
+fc.site <-   oilSP
+fc.serv <-   oilSP
+fc.util <-   oilSP
+fc.cont <-   oilSP
+fc.land <-   oilSP
+fc.permit <- oilSP
+fc.RIP <-    oilSP
+fc.start <-  oilSP
+fc.wells <-  oilSP
+fc.WC <-     oilSP
+pb.cap <-    oilSP
+pb.loai <-   oilSP
+pb.rstp <-   oilSP
+pb.royl <-   oilSP
+pb.tfts <-   oilSP
+pb.heat <-   oilSP
+pb.opPS <-   oilSP
+pb.prof <-   oilSP
+maxE <-      oilSP
+meanE <-     oilSP
 
 # Progress Bar (since this next for-loop takes a while)
 pb <- txtProgressBar(min = 0, max = nrow(parR), width = 75, style = 3)
@@ -152,7 +177,7 @@ for (j in 1:nrow(parR)) {
   # Heating -----------------------------------------------------------------
 
   # Heater capital cost
-  capheat <- parR$nwell[j]*uopt$heatcost*(wellL$prod/uopt$heatBlength)^1 # scale linearly?
+  capheat <- parR$nwell[j]*uopt$heatcost*(wellL$prod/uopt$heatBlength)^1
 
   # Heating operating cost calculation
   # Step 1: Calculate energy demand history
@@ -292,44 +317,44 @@ for (j in 1:nrow(parR)) {
   # Calculate $/bbl cash flows ----------------------------------------------
 
   # Capital cost fractions
-  fc.heat[j] <-   capheat/ccs$TCI
-  fc.PSS[j] <-    capPSS/ccs$TCI
-  fc.site[j] <-   with(ccs, Site/TCI)
-  fc.serv[j] <-   with(ccs, Serv/TCI)
-  fc.util[j] <-   with(ccs, capU/TCI)
-  fc.cont[j] <-   with(ccs, Cont/TCI)
-  fc.land[j] <-   with(ccs, Land/TCI)
-  fc.permit[j] <- with(ccs, Permit/TCI)
-  fc.RIP[j] <-    with(ccs, RIP/TCI)
-  fc.start[j] <-  with(ccs, Start/TCI)
-  fc.wells[j] <-  with(ccs, Wells/TCI)
-  fc.WC[j] <-     with(ccs, WC/TCI)
+  fc.heat[j] <-   capheat/ccs$TCI       # Heating
+  fc.PSS[j] <-    capPSS/ccs$TCI        # Product separation and storage
+  fc.site[j] <-   with(ccs, Site/TCI)   # Site
+  fc.serv[j] <-   with(ccs, Serv/TCI)   # Service facilities
+  fc.util[j] <-   with(ccs, capU/TCI)   # Utilities (i.e. electrical grid connection)
+  fc.cont[j] <-   with(ccs, Cont/TCI)   # Contingency
+  fc.land[j] <-   with(ccs, Land/TCI)   # Land
+  fc.permit[j] <- with(ccs, Permit/TCI) # Permitting
+  fc.RIP[j] <-    with(ccs, RIP/TCI)    # Royalties for intellectual property
+  fc.start[j] <-  with(ccs, Start/TCI)  # Startup
+  fc.wells[j] <-  with(ccs, Wells/TCI)  # Wells
+  fc.WC[j] <-     with(ccs, WC/TCI)     # Working capital
 
   # Run fCFterms function to get terms in cash flow equation that depend on oil
   CF <- fCFterms(oilSP[j])
 
   # Per barrel
-  pb.cap[j] <-  with(model, sum(CTDC+CD+CWD+CSt+CWC))/sum(oil)                   # Capital
-  pb.loai[j] <- (sum(model$fixed)+sum(0.01*ccs$TPI)+sum(CF$admin.comp))/sum(oil) # Labor, maint., overhead, admin salary + comp, insurance
-  pb.rstp[j] <- (sum(with(CF, ro+sto+TS+TF))+sum(with(model, rg+stg))-sum(0.01*ccs$TPI))/sum(oil)
-  pb.royl[j] <- (sum(CF$ro)+sum(model$rg))/sum(oil)
-  pb.tfts[j] <- (sum(with(CF, TS+TF)))/sum(oil)
-  pb.heat[j] <- sum(model$opheat)/sum(oil)
-  pb.opPS[j] <- sum(model$opPSS)/sum(oil)
-  pb.prof[j] <- sum(CF$osale)/sum(oil)+pb.cap+pb.loai+pb.rstp+pb.heat+pb.opPS
+  pb.cap[j] <-  with(model, sum(CTDC+CD+CWD+CSt+CWC))/sum(oil)                                    # Capital
+  pb.loai[j] <- (sum(model$fixed)+sum(0.01*ccs$TPI)+sum(CF$admin.comp))/sum(oil)                  # Labor, maint., overhead, admin salary + comp, insurance
+  pb.rstp[j] <- (sum(with(CF, ro+sto+TS+TF))+sum(with(model, rg+stg))-sum(0.01*ccs$TPI))/sum(oil) # Royalties, serverance, income tax, and property taxes
+  pb.royl[j] <- (sum(CF$ro)+sum(model$rg))/sum(oil)                                               # Royalties only
+  pb.tfts[j] <- (sum(with(CF, TS+TF)))/sum(oil)                                                   # Taxes only
+  pb.heat[j] <- sum(model$opheat)/sum(oil)                                                        # Electrical heating cost
+  pb.opPS[j] <- sum(model$opPSS)/sum(oil)                                                         # Product separation and storage cost
+  pb.prof[j] <- sum(CF$osale)/sum(oil)+pb.cap[j]+pb.loai[j]+pb.rstp[j]+pb.heat[j]+pb.opPS[j]      # Net profit
 
 
   # Save results ------------------------------------------------------------
 
-  # Total capital cost
-  Toil[j] <- sum(oil)
-  Tgas[j] <- sum(gasp)
-  TCI[j] <-  ccs$TCI
-  CPFB[j] <- ccs$TCI/(Toil[j]/length(oil))
-  sTE[j] <-  sum(E)
+  Toil[j] <-  sum(oil)
+  Tgas[j] <-  sum(model$gasp)
+  TCI[j] <-   ccs$TCI
+  CPFB[j] <-  ccs$TCI/(Toil[j]/length(oil))
+  sTE[j] <-   sum(E)
   prodL[j] <- wellL$prod
-  NER[j] <-   (moil*(1-parR$xg[j])*uopt$eoil+moil*parR$xg[j]*uopt$egas)/(sTE)
-
+  maxE[j] <-  max(E)
+  meanE[j] <- mean(E)
+  NER[j] <-   (sum(moil)*(1-parR$xg[j])*uopt$eoil+sum(moil)*parR$xg[j]*uopt$egas)/(sTE[j])
 
   # Update progress bar
   Sys.sleep(1e-3)
@@ -343,5 +368,39 @@ close(pb)
 beep(3, message("Script Finished"))
 
 # ... and really save results
-results <- data.frame(parR, oilSP, Toil, TCI, CPFB, sTE, prodL)
-save(results, file = file.path(path$data, "UO_main Results v8.rda"))
+results <- data.frame(parR,
+                      prodL,
+                      oilSP,
+                      Toil,
+                      Tgas,
+                      sTE,
+                      NER,
+                      maxE,
+                      meanE,
+                      fc.heat,
+                      fc.PSS,
+                      fc.site,
+                      fc.serv,
+                      fc.util,
+                      fc.cont,
+                      fc.land,
+                      fc.permit,
+                      fc.RIP,
+                      fc.start,
+                      fc.wells,
+                      fc.WC,
+                      pb.cap,
+                      pb.loai,
+                      pb.rstp,
+                      pb.royl,
+                      pb.tfts,
+                      pb.heat,
+                      pb.opPS,
+                      pb.prof)
+
+save(results, file = file.path(path$data, paste("UO_main Results ", uopt$ver, ".rda", sep = "")))
+
+# ... and write to csv
+write.csv(x =    data.frame(parR, prodL, oilSP, Toil, Tgas, sTE, NER, maxE, meanE),
+          file = file.path(path$data, paste("UO_main Results ", uopt$ver, ".csv", sep = "")),
+          row.names = F)

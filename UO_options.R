@@ -15,6 +15,8 @@
 # Define "uopt" list object - this must exist in order to set any other options
 uopt <- NULL
 
+# Version #
+uopt$ver <- "v9"
 
 # One-time analysis functions ---------------------------------------------
 
@@ -37,7 +39,7 @@ uopt$parR <- data.frame(#tDrill =   qunif(parLHS[,1], min = 72,    max = 143),
                         well.cap = qunif(parLHS[,2], min = 1.9e6, max = 6.6e6), # Well capital cost
                         totalL =   qunif(parLHS[,3], min = 6420,  max = 19580), # Total well length (ft)
                         xg =       qunif(parLHS[,4], min = 0,     max = 0.5),   # Mass fraction gas
-                        gp =       qunif(parLHS[,5], min = 0.00,  max = 5.87),  # Gas price ($/MCF)
+                        gp =       qunif(parLHS[,5], min = 0,     max = 5.87),  # Gas price ($/MCF)
                         IRR =      qunif(parLHS[,6], min = 0.10,  max = 0.20),  # Internal rate of return
                         rec =      qunif(parLHS[,7], min = 0.4,   max = 0.8))   # Recovery fraction
 
@@ -75,6 +77,10 @@ uopt$convert.otg <- 1/(1.24)*(35.3147/1e3)
 # Density of oil
 # Formula :         (density of water @ 60F)*(141.5/(API gravity + 131.5))
 uopt$rho.oil <- 998.2071*(141.5/(36+131.5))
+
+# Energy densities (converted from MJ/kg to kWh/kg)
+uopt$eoil <- 42.55/3.6 # Oil
+uopt$egas <- 22.78/3.6 # Gas
 
 
 # Heater Options ----------------------------------------------------------

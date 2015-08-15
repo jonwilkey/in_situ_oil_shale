@@ -1,4 +1,4 @@
-load(file.path(path$data, "UO_main Results v8.rda"))
+load(file.path(path$data, paste("UO_main Results ", uopt$ver, ".rda", sep = "")))
 
 
 # Base graphics - Scatterplots --------------------------------------------
