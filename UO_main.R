@@ -59,6 +59,7 @@ flst <- file.path(path$fun, c("wtRadius.R",
                               "fNPV.R",
                               "fCFterms.R",
                               "asYear.R",
+                              "multiplot.R",
                               "clipboard.R"))
 
 # Load each function in list then remove temporary file list variables
@@ -373,6 +374,8 @@ results <- data.frame(parR,
                       oilSP,
                       Toil,
                       Tgas,
+                      TCI,
+                      CPFB,
                       sTE,
                       NER,
                       maxE,
