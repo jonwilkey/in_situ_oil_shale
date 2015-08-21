@@ -283,13 +283,13 @@ dev.off()
 # Boxplots for economically viable set
 
 # Reshape
-bdr <- rbind(data.frame(type = as.factor("CTPI"),        cost = (-r$pb.cap)),
-             data.frame(type = as.factor("CV"), cost = (-(r$pb.heat+r$pb.opPS))),
-             data.frame(type = as.factor("CF"),    cost = (-r$pb.loai)),
+bdr <- rbind(data.frame(type = as.factor("CTPI"),   cost = (-r$pb.cap)),
+             data.frame(type = as.factor("CV"),     cost = (-(r$pb.heat+r$pb.opPS))),
+             data.frame(type = as.factor("CF"),     cost = (-r$pb.loai)),
              data.frame(type = as.factor("R"),      cost = (-r$pb.royl)),
              data.frame(type = as.factor("TFTS"),   cost = (-r$pb.tfts)),
-             data.frame(type = as.factor("STP"),  cost = (-(r$pb.rstp-r$pb.royl-r$pb.tfts))),
-             data.frame(type = as.factor("Profit"),         cost = r$pb.prof))
+             data.frame(type = as.factor("STP"),    cost = (-(r$pb.rstp-r$pb.royl-r$pb.tfts))),
+             data.frame(type = as.factor("Profit"), cost = r$pb.prof))
 
 # Drop any negatives
 bdr <- bdr[bdr$cost >= 0,]
@@ -310,24 +310,41 @@ boxplot(cost~type, bdr,
 
 dev.off()
 
+r <- results[results$oilSP <= 175,]
+
 # Repeat for capital
-cdr <- rbind(data.frame(type = as.factor("heat"),   frac = r$fc.heat),#*r$TCI),
-             data.frame(type = as.factor("PSS"),    frac = r$fc.PSS),#*r$TCI),
-             data.frame(type = as.factor("SS"),     frac = (r$fc.site+r$fc.serv)),#*r$TCI),
-             data.frame(type = as.factor("util"),   frac = r$fc.util),#*r$TCI),
-             data.frame(type = as.factor("cont"),   frac = r$fc.cont),#*r$TCI),
-             data.frame(type = as.factor("land"),   frac = r$fc.land),#*r$TCI),
-             data.frame(type = as.factor("permit"), frac = r$fc.permit),#*r$TCI),
-             data.frame(type = as.factor("RIP"),    frac = r$fc.RIP),#*r$TCI),
-             data.frame(type = as.factor("start"),  frac = r$fc.start),#*r$TCI),
-             data.frame(type = as.factor("wells"),  frac = r$fc.wells),#*r$TCI),
-             data.frame(type = as.factor("WC"),     frac = r$fc.WC))#*r$TCI))
+cdr <- rbind(data.frame(type = as.factor("heat"),   frac = r$fc.heat),
+             data.frame(type = as.factor("PSS"),    frac = r$fc.PSS),
+             data.frame(type = as.factor("SS"),     frac = (r$fc.site+r$fc.serv)),
+             data.frame(type = as.factor("util"),   frac = r$fc.util),
+             data.frame(type = as.factor("cont"),   frac = r$fc.cont),
+             data.frame(type = as.factor("land"),   frac = r$fc.land),
+             data.frame(type = as.factor("permit"), frac = r$fc.permit),
+             data.frame(type = as.factor("RIP"),    frac = r$fc.RIP),
+             data.frame(type = as.factor("start"),  frac = r$fc.start),
+             data.frame(type = as.factor("wells"),  frac = r$fc.wells),
+             data.frame(type = as.factor("WC"),     frac = r$fc.WC))
+
+cdrc <- rbind(data.frame(type = as.factor("heat"),   frac = r$fc.heat*r$TCI),
+              data.frame(type = as.factor("PSS"),    frac = r$fc.PSS*r$TCI),
+              data.frame(type = as.factor("SS"),     frac = (r$fc.site+r$fc.serv)*r$TCI),
+              data.frame(type = as.factor("util"),   frac = r$fc.util*r$TCI),
+              data.frame(type = as.factor("cont"),   frac = r$fc.cont*r$TCI),
+              data.frame(type = as.factor("land"),   frac = r$fc.land*r$TCI),
+              data.frame(type = as.factor("permit"), frac = r$fc.permit*r$TCI),
+              data.frame(type = as.factor("RIP"),    frac = r$fc.RIP*r$TCI),
+              data.frame(type = as.factor("start"),  frac = r$fc.start*r$TCI),
+              data.frame(type = as.factor("wells"),  frac = r$fc.wells*r$TCI),
+              data.frame(type = as.factor("WC"),     frac = r$fc.WC*r$TCI))
 
 pdf(file.path(path$plot, "capital cost boxplot.pdf"))
 
-boxplot(frac~type, cdr,
+boxplot(frac~type, cdrc,
         range = 0,
-        names = c("Heaters",
+        log = "y",
+        ylim = c(5e5, 5e9),
+        yaxt = "n",
+        names = c("Heat",
                   "PSS",
                   expression(C[SS]),
                   expression(C[alloc]),
@@ -339,6 +356,136 @@ boxplot(frac~type, cdr,
                   expression(C[DC]),
                   expression(C[WC])),
         xlab = "Capital Cost Category",
-        ylab = expression(paste("Fraction of ", C[TPI])))
+        ylab = expression(paste("Capital Cost ($)")))
+axis(side = 2, at = c(1e5, 1e6, 1e7, 1e8, 1e9, 1e10),
+     labels = c(expression(10^5),
+                expression(10^6),
+                expression(10^7),
+                expression(10^8),
+                expression(10^9),
+                expression(10^10)),
+     las = 2)
 
 dev.off()
+
+
+
+# Tables ------------------------------------------------------------------
+
+# Best scenarios by OSP
+r <- with(results, data.frame(design, LHS, oilSP, nwell, tDrill, well.cap, prodL, rec, xg, gp, IRR, NER))
+
+# Predefine results object
+bso <- NULL
+
+# For each of the top i results
+for (i in 1:5) {
+
+  # Find the LHS # of the lowest oilSP
+  lhsn <- r$LHS[which.min(r$oilSP)]
+
+  # Get row indices of lhsn in r
+  ind <- which(r$LHS == lhsn)
+
+  # Get a temporary subset of r
+  temp <- r[ind,]
+
+  # Reorder according to OSP
+  temp <- temp[order(temp$oilSP),]
+
+  # create table
+  dft <- as.data.frame(matrix(c(lhsn, temp$design[1:5], lhsn, round(temp$oilSP[1:5],2)), nrow = 2, byrow = T))
+
+  # Change variable types and round
+  dft[c(1, 3, 5, 7, 9),] <- as.integer(dft[c(1, 3, 5, 7, 9),])
+  dft[c(2, 4, 6, 8, 10),] <- round(dft[c(2, 4, 6, 8, 10),], 2)
+
+  # Save out results
+  bso <- rbind(bso, dft)
+
+  # Drop all lhsn rows from r
+  r <- r[-ind,]
+}
+
+# Worst scenarios by OSP
+r <- with(results, data.frame(design, LHS, oilSP, nwell, tDrill, well.cap, prodL, rec, xg, gp, IRR, NER))
+
+# Predefine results object
+wso <- NULL
+
+# For each of the top i results
+for (i in 1:5) {
+
+  # Find the LHS # of the lowest oilSP
+  lhsn <- r$LHS[which.max(r$oilSP)]
+
+  # Get row indices of lhsn in r
+  ind <- which(r$LHS == lhsn)
+
+  # Get a temporary subset of r
+  temp <- r[ind,]
+
+  # Reorder according to OSP
+  temp <- temp[order(temp$oilSP, decreasing = T),]
+
+  # create table
+  dft <- round(data.frame(matrix(c(lhsn, temp$design[1:5], lhsn, round(temp$oilSP[1:5],2)), nrow = 2, byrow = T)))
+
+  # Save out results
+  wso <- rbind(wso, dft)
+
+  # Drop all lhsn rows from r
+  r <- r[-ind,]
+}
+
+# Top 5 best/worst LHS scenario parameters table
+lhsn <- unique(c(bso[,1],wso[,1]))
+
+# Predefine results object
+bwso <- NULL
+
+for (i in 1:length(lhsn)) {
+
+  # Subset
+  temp <- results[results$LHS == lhsn[i],c("tDrill", "well.cap", "prodL", "rec", "xg", "gp", "IRR")]
+
+  # Change data types and round
+  temp$tDrill <- round(temp$tDrill)
+  temp$well.cap <- round(temp$well.cap/1e6,2)
+  temp$prodL <- round(temp$prodL/1e3,2)
+  temp[,c("rec", "xg", "gp", "IRR")] <- round(temp[,c("rec", "xg", "gp", "IRR")],2)
+
+  bwso <- rbind(bwso,
+                c(lhsn[i],unique(temp)))
+}
+
+# Predefine results
+cr <- matrix(0, nrow = 9, ncol = 242)
+pr <- cr
+
+# Get correlation coefficients and p-values for each ISD
+for (i in 1:242) {
+
+  # Get subset
+  temp <- corr.test(results[results$design == i,
+                            c("oilSP", "tDrill", "well.cap", "prodL", "rec", "xg", "gp", "IRR", "NER")])
+
+  # Extract values
+  cr[,i] <- temp$r[,1]
+  pr[,i] <- temp$p[,1]
+}
+
+# Make table
+cpr <- data.frame(rmean = rowMeans(cr), pmean = rowMeans(pr))
+
+# Drop first row and round r value
+cpr <- cpr[-1,]
+cpr$rmean <- round(cpr$rmean,2)
+
+
+# Energy demand curve -----------------------------------------------------
+
+test <-        read.csv(file.path(path$raw, "energy-164.csv"))
+test[,2:3] <-  test[,2:3]*(8500/uopt$base.prod)
+names(test) <- c("time","ce","ie")
+test$time <-   test$time/3600/24

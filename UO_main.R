@@ -73,6 +73,7 @@ library(sqldf)
 library(lhs)
 library(beepr)
 library(ggplot2)
+library(scales)
 
 
 # 1.4 Options -------------------------------------------------------------
