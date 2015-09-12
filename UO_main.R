@@ -18,13 +18,10 @@ path <- NULL
 
 # Path switch - uncomment and/or replace with the path directory for your local
 # copy of the Git repository and Dropbox files.
-
-pwd.drop <- "C:/Users/jonwi/"                       # Windows
+pwd.drop <- "C:/Users/jonwi/"                 # Desktop
 pwd.git  <- "C:/Users/jonwi/Documents/R/"
-# pwd.drop <- "/Users/john/"              # Mac
-# pwd.git  <- "/Users/john/Documents/"
-# pwd.drop <- "~/"                        # Linux
-# pwd.git  <- "~/Documents/R Projects/"
+# pwd.drop <- "C:/Users/Jon Wilkey/"              # Laptop
+# pwd.git  <- "C:/Users/Jon Wilkey/Documents/R/"
 
 # Define paths.
 # "raw"  is raw data (*.dbf files from DOGM, *.csv files, etc.).
@@ -228,7 +225,7 @@ for (j in 1:nrow(parR)) {
   # Utility Lines -----------------------------------------------------------
 
   # Capital cost of all utilities
-  capU <- with(uopt, hubL*(eline+eswitch))
+  capU <- with(uopt, hubL*(eline)*(1+eswitch))
 
 
   # Capital Costing ---------------------------------------------------------
@@ -405,6 +402,6 @@ results <- data.frame(parR,
 save(results, file = file.path(path$data, paste("UO_main Results ", uopt$ver, ".rda", sep = "")))
 
 # ... and write to csv
-write.csv(x =    data.frame(parR, prodL, oilSP, Toil, Tgas, sTE, NER, maxE, meanE),
+write.csv(x =    results[,1:29], # change me if more columns are add/shifted around
           file = file.path(path$data, paste("UO_main Results ", uopt$ver, ".csv", sep = "")),
           row.names = F)

@@ -119,9 +119,12 @@ uopt$Nopers <- 3
 # Data from EIA Average retail price of electricity to ultimate customers: http://www.eia.gov/electricity/data.cfm#sales
 uopt$ep <- 0.0607
 
-# Electrity infrastructure
-uopt$eline <-   425e3*(uopt$cpi/229.594) # Line cost ($/mi)
-uopt$eswitch <- 10e3*(uopt$cpi/229.594)  # Switching gear and tap ($/mi)
+# Electrity infrastructure, assuming 500 kV single circuit line (1500 MW capacity)
+# (https://www.wecc.biz/Reliability/2014_TEPPC_Transmission_CapCost_Report_B+V.pdf).
+uopt$eline <-   (959700+   # Base Line cost ($/mi)
+                   (24.23* # Right of way width (acres/mile)
+                      85)) # BLM land capital cost ($/acre)
+uopt$eswitch <- 0.1        # Substation cost as fraction of line cost
 
 # Distance to nearest utility hub (mi)
 uopt$hubL <- 50
