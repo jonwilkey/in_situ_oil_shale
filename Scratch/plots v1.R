@@ -1,138 +1,5 @@
 load(file.path(path$data, paste("UO_main Results ", uopt$ver, ".rda", sep = "")))
 
-
-# Base graphics - Scatterplots --------------------------------------------
-
-pdf(file.path(path$plot, "ISv4 Results.pdf"))
-
-plot(oilSP~nwell, results,
-     log = "y",
-     col = "#00000025",
-     ylab = "Wellhead Oil Supply Price ($/bbl) - Log Scale",
-     xlab = "Number of Wells")
-points(rbind(aggregate(r$oilSP, list(r$nwell), max),
-             aggregate(r$oilSP, list(r$nwell), min)),
-       col = "red", pch = 19)
-
-plot(oilSP~NER, results,
-     log = "y",
-     col = "#00000025",
-     ylab = "Wellhead Oil Supply Price ($/bbl) - Log Scale",
-     xlab = "NER")
-points(rbind(aggregate(r$oilSP, list(r$NER), max),
-             aggregate(r$oilSP, list(r$NER), min)),
-       col = "red", pch = 19)
-
-plot(oilSP~tDrill, results,
-     log = "y",
-     col = "#00000025",
-     ylab = "Wellhead Oil Supply Price ($/bbl) - Log Scale",
-     xlab = "tDrill (days)")
-points(rbind(aggregate(r$oilSP, list(r$tDrill), max),
-             aggregate(r$oilSP, list(r$tDrill), min)),
-       col = "red", pch = 19)
-
-plot(oilSP~well.cap, results,
-     log = "y",
-     col = "#00000025",
-     ylab = "Wellhead Oil Supply Price ($/bbl) - Log Scale",
-     xlab = "Well Capital Cost (2014 USD)")
-points(rbind(aggregate(r$oilSP, list(r$well.cap), max),
-             aggregate(r$oilSP, list(r$well.cap), min)),
-       col = "red", pch = 19)
-
-plot(oilSP~totalL, results,
-     log = "y",
-     col = "#00000025",
-     ylab = "Wellhead Oil Supply Price ($/bbl) - Log Scale",
-     xlab = "Total Well Length (ft)")
-points(rbind(aggregate(r$oilSP, list(r$totalL), max),
-             aggregate(r$oilSP, list(r$totalL), min)),
-       col = "red", pch = 19)
-
-plot(oilSP~xg, results,
-     log = "y",
-     col = "#00000025",
-     ylab = "Wellhead Oil Supply Price ($/bbl) - Log Scale",
-     xlab = "Gas Mass Fraction")
-points(rbind(aggregate(r$oilSP, list(r$xg), max),
-             aggregate(r$oilSP, list(r$xg), min)),
-       col = "red", pch = 19)
-
-plot(oilSP~gp, results,
-     log = "y",
-     col = "#00000025",
-     ylab = "Wellhead Oil Supply Price ($/bbl) - Log Scale",
-     xlab = "Wellhead Gas Price ($/MCF)")
-points(rbind(aggregate(r$oilSP, list(r$gp), max),
-             aggregate(r$oilSP, list(r$gp), min)),
-       col = "red", pch = 19)
-
-plot(oilSP~IRR, results,
-     log = "y",
-     col = "#00000025",
-     ylab = "Wellhead Oil Supply Price ($/bbl) - Log Scale",
-     xlab = "IRR")
-points(rbind(aggregate(r$oilSP, list(r$IRR), max),
-             aggregate(r$oilSP, list(r$IRR), min)),
-       col = "red", pch = 19)
-
-plot(oilSP~Toil, results,
-     log = "y",
-     col = "#00000025",
-     ylab = "Wellhead Oil Supply Price ($/bbl) - Log Scale",
-     xlab = "Total Oil Production (bbl)")
-points(rbind(aggregate(r$oilSP, list(r$Toil), max),
-             aggregate(r$oilSP, list(r$Toil), min)),
-       col = "red", pch = 19)
-
-plot(oilSP~TCI, results,
-     log = "y",
-     col = "#00000025",
-     ylab = "Wellhead Oil Supply Price ($/bbl) - Log Scale",
-     xlab = "Total Capital Investment (2014 USD)")
-points(rbind(aggregate(r$oilSP, list(r$TCI), max),
-             aggregate(r$oilSP, list(r$TCI), min)),
-       col = "red", pch = 19)
-
-plot(oilSP~CPFB, results,
-     log = "xy",
-     col = "#00000025",
-     ylab = "Wellhead Oil Supply Price ($/bbl) - Log Scale",
-     xlab = "Capital per Flowing Barrel (2014 USD per bbl) - LOG SCALE")
-points(rbind(aggregate(r$oilSP, list(r$CPFB), max),
-             aggregate(r$oilSP, list(r$CPFB), min)),
-       col = "red", pch = 19)
-
-plot(oilSP~rec, results,
-     log = "y",
-     col = "#00000025",
-     ylab = "Wellhead Oil Supply Price ($/bbl) - Log Scale",
-     xlab = "Recovery Fraction")
-points(rbind(aggregate(r$oilSP, list(r$rec), max),
-             aggregate(r$oilSP, list(r$rec), min)),
-       col = "red", pch = 19)
-
-dev.off()
-
-
-# ggplot2 Graphics --------------------------------------------------------
-
-# Histogram
-pdf(file.path(path$plot, "ISS v8 hist.pdf"))
-
-ggplot(r, aes(x = nwell)) +    geom_histogram(aes(y=..density..),binwidth = 1, colour = "black", fill = "white") + theme_bw() + geom_density(alpha = 0.2, fill = "lightgrey")
-ggplot(r, aes(x = NER)) +      geom_histogram(aes(y=..density..), colour = "black", fill = "white") + theme_bw() + geom_density(alpha = 0.2, fill = "lightgrey")
-ggplot(r, aes(x = tDrill)) +   geom_histogram(aes(y=..density..), colour = "black", fill = "white") + theme_bw() + geom_density(alpha = 0.2, fill = "lightgrey")
-ggplot(r, aes(x = well.cap)) + geom_histogram(aes(y=..density..), colour = "black", fill = "white") + theme_bw() + geom_density(alpha = 0.2, fill = "lightgrey")
-ggplot(r, aes(x = totalL)) +   geom_histogram(aes(y=..density..), colour = "black", fill = "white") + theme_bw() + geom_density(alpha = 0.2, fill = "lightgrey")
-ggplot(r, aes(x = xg)) +       geom_histogram(aes(y=..density..), colour = "black", fill = "white") + theme_bw() + geom_density(alpha = 0.2, fill = "lightgrey")
-ggplot(r, aes(x = rec)) +      geom_histogram(aes(y=..density..), colour = "black", fill = "white") + theme_bw() + geom_density(alpha = 0.2, fill = "lightgrey")
-ggplot(r, aes(x = gp)) +       geom_histogram(aes(y=..density..), colour = "black", fill = "white") + theme_bw() + geom_density(alpha = 0.2, fill = "lightgrey")
-ggplot(r, aes(x = IRR)) +      geom_histogram(aes(y=..density..), colour = "black", fill = "white") + theme_bw() + geom_density(alpha = 0.2, fill = "lightgrey")
-
-dev.off()
-
 # Black and white theme with no y axis label
 theme_bw_noy <- function (base_size = 12, base_family = "") {
   theme_grey(base_size = base_size, base_family = base_family) %+replace%
@@ -150,12 +17,88 @@ theme_bw_noy <- function (base_size = 12, base_family = "") {
 # Multiplot hexplot function
 multi.xyhex <- function(r, logflag) {
 
-  fnwell <- ggplot(r, aes(x = nwell, y = oilSP)) +
+  fhspace <- ggplot(r, aes(x = hspace*3.28084, y = oilSP)) +
     stat_binhex(bins = 20) +
     scale_fill_gradientn(colours = c("lightgrey","black")) +
     theme_bw() +
-    xlab("Number of Wells") +
-    ylab("OSP ($/bbl)") +
+    xlab(expression(paste(H[space], " (ft)"))) +
+    ylab("OSP ($ / bbl)") +
+    guides(fill = FALSE)
+  if (logflag == T) {
+    fhspace <- fhspace+scale_y_continuous(trans = log10_trans(),
+                                          breaks = c(10^2, 10^3, 10^4, 10^5),
+                                          labels = trans_format("log10", math_format(10^.x)))
+  }
+
+  fvspace <- ggplot(r, aes(x = vspace*3.28084, y = oilSP)) +
+    stat_binhex(bins = 20) +
+    scale_fill_gradientn(colours = c("lightgrey","black")) +
+    theme_bw() +
+    xlab(expression(paste(V[space], " (ft)"))) +
+    ylab("OSP ($ / bbl)") +
+    guides(fill = FALSE)
+  if (logflag == T) {
+    fvspace <- fvspace+scale_y_continuous(trans = log10_trans(),
+                                          breaks = c(10^2, 10^3, 10^4, 10^5),
+                                          labels = trans_format("log10", math_format(10^.x)))
+  }
+
+  fangle <- ggplot(r, aes(x = angle, y = oilSP)) +
+    stat_binhex(bins = 20) +
+    scale_fill_gradientn(colours = c("lightgrey","black")) +
+    theme_bw() +
+    xlab(expression(paste(V[angle], " (deg)"))) +
+    ylab("OSP ($ / bbl)") +
+    guides(fill = FALSE)
+  if (logflag == T) {
+    fangle <- fangle+scale_y_continuous(trans = log10_trans(),
+                                        breaks = c(10^2, 10^3, 10^4, 10^5),
+                                        labels = trans_format("log10", math_format(10^.x)))
+  }
+
+  floc <- ggplot(r, aes(x = loc*3.28084, y = oilSP)) +
+    stat_binhex(bins = 20) +
+    scale_fill_gradientn(colours = c("lightgrey","black")) +
+    theme_bw() +
+    xlab(expression(paste(V[location], " (ft)"))) +
+    ylab("OSP ($ / bbl)") +
+    guides(fill = FALSE)
+  if (logflag == T) {
+    floc <- floc+scale_y_continuous(trans = log10_trans(),
+                                    breaks = c(10^2, 10^3, 10^4, 10^5),
+                                    labels = trans_format("log10", math_format(10^.x)))
+  }
+
+  fradius <- ggplot(r, aes(x = as.factor(round(radius*3.28084,2)), y = oilSP)) +
+    geom_violin(fill = "grey") +
+    theme_bw_noy() +
+    xlab("r (ft)") +
+    ylab("OSP ($ / bbl)") +
+    guides(fill = FALSE)
+  if (logflag == T) {
+    fradius <- fradius+scale_y_continuous(trans = log10_trans(),
+                                          breaks = c(10^2, 10^3, 10^4, 10^5),
+                                          labels = trans_format("log10", math_format(10^.x)))
+  }
+
+  fnrow <- ggplot(r, aes(x = as.factor(nrow), y = oilSP)) +
+    geom_violin(fill = "grey") +
+    theme_bw_noy() +
+    xlab(expression(n[row])) +
+    ylab("OSP ($ / bbl)") +
+    guides(fill = FALSE)
+  if (logflag == T) {
+    fnrow <- fnrow+scale_y_continuous(trans = log10_trans(),
+                                      breaks = c(10^2, 10^3, 10^4, 10^5),
+                                      labels = trans_format("log10", math_format(10^.x)))
+  }
+
+  fnwell <- ggplot(r, aes(x = nwell, y = oilSP)) +
+    stat_binhex(bins = 20) +
+    scale_fill_gradientn(colours = c("lightgrey","black")) +
+    theme_bw_noy() +
+    xlab(expression(n[well])) +
+    ylab("OSP ($ / bbl)") +
     guides(fill = FALSE)
   if (logflag == T) {
     fnwell <- fnwell+scale_y_continuous(trans = log10_trans(),
@@ -166,9 +109,9 @@ multi.xyhex <- function(r, logflag) {
   ftDrill <- ggplot(r, aes(x = tDrill, y = oilSP)) +
     stat_binhex(bins = 20) +
     scale_fill_gradientn(colours = c("lightgrey","black")) +
-    theme_bw() +
-    xlab("tDrill (days)") +
-    ylab("OSP ($/bbl)") +
+    theme_bw_noy() +
+    xlab(expression(paste(t[Drill], " (days)"))) +
+    ylab("OSP ($ / bbl)") +
     guides(fill = FALSE)
   if (logflag == T) {
     ftDrill <- ftDrill+scale_y_continuous(trans = log10_trans(),
@@ -179,9 +122,9 @@ multi.xyhex <- function(r, logflag) {
   fcwell <- ggplot(r, aes(x = well.cap/1e6, y = oilSP)) +
     stat_binhex(bins = 20) +
     scale_fill_gradientn(colours = c("lightgrey","black")) +
-    theme_bw() +
-    xlab("Well Cost($1e6)") +
-    ylab("OSP ($/bbl)") +
+    theme_bw_noy() +
+    xlab(expression(paste(C[DC], " ($1e6)"))) +
+    ylab("OSP ($ / bbl)") +
     guides(fill = FALSE)
   if (logflag == T) {
     fcwell <- fcwell+scale_y_continuous(trans = log10_trans(),
@@ -193,8 +136,8 @@ multi.xyhex <- function(r, logflag) {
     stat_binhex(bins = 20) +
     scale_fill_gradientn(colours = c("lightgrey","black")) +
     theme_bw_noy() +
-    xlab("Heater Length (1e3 ft)") +
-    ylab("OSP ($/bbl)") +
+    xlab("L (1e3 ft)") +
+    ylab("OSP ($ / bbl)") +
     guides(fill = FALSE)
   if (logflag == T) {
     fprodL <- fprodL+scale_y_continuous(trans = log10_trans(),
@@ -206,8 +149,8 @@ multi.xyhex <- function(r, logflag) {
     stat_binhex(bins = 20) +
     scale_fill_gradientn(colours = c("lightgrey","black")) +
     theme_bw_noy() +
-    xlab("Product Recovery") +
-    ylab("OSP ($/bbl)") +
+    xlab(expression(x[r])) +
+    ylab("OSP ($ / bbl)") +
     guides(fill = FALSE)
   if (logflag == T) {
     frec <- frec+scale_y_continuous(trans = log10_trans(),
@@ -219,8 +162,8 @@ multi.xyhex <- function(r, logflag) {
     stat_binhex(bins = 20) +
     scale_fill_gradientn(colours = c("lightgrey","black")) +
     theme_bw_noy() +
-    xlab("Gas Fraction") +
-    ylab("OSP ($/bbl)") +
+    xlab(expression(x[g])) +
+    ylab("OSP ($ / bbl)") +
     guides(fill = FALSE)
   if (logflag == T) {
     fxg <- fxg+scale_y_continuous(trans = log10_trans(),
@@ -232,8 +175,8 @@ multi.xyhex <- function(r, logflag) {
     stat_binhex(bins = 20) +
     scale_fill_gradientn(colours = c("lightgrey","black")) +
     theme_bw_noy() +
-    xlab("Gas Price ($/MCF)") +
-    ylab("OSP ($/bbl)") +
+    xlab(expression(paste(x[g]," ($ / MCF)"))) +
+    ylab("OSP ($ / bbl)") +
     guides(fill = FALSE)
   if (logflag == T) {
     fgp <- fgp+scale_y_continuous(trans = log10_trans(),
@@ -246,7 +189,7 @@ multi.xyhex <- function(r, logflag) {
     scale_fill_gradientn(colours = c("lightgrey","black")) +
     theme_bw_noy() +
     xlab("IRR") +
-    ylab("OSP ($/bbl)") +
+    ylab("OSP ($ / bbl)") +
     guides(fill = FALSE)
   if (logflag == T) {
     fIRR <- fIRR+scale_y_continuous(trans = log10_trans(),
@@ -254,30 +197,49 @@ multi.xyhex <- function(r, logflag) {
                                         labels = trans_format("log10", math_format(10^.x)))
   }
 
-  fNER <- ggplot(r, aes(x = NER, y = oilSP)) +
-    stat_binhex(bins = 20) +
-    scale_fill_gradientn(colours = c("lightgrey","black")) +
-    theme_bw_noy() +
-    xlab("NER") +
-    ylab("OSP ($/bbl)") +
-    guides(fill = FALSE)
-  if (logflag == T) {
-    fNER <- fNER+scale_y_continuous(trans = log10_trans(),
-                                        breaks = c(10^2, 10^3, 10^4, 10^5),
-                                        labels = trans_format("log10", math_format(10^.x)))
-  }
 
-  multiplot(fnwell, ftDrill, fcwell, fprodL, frec, fxg, fgp, fIRR, fNER, cols = 3)
+
+  multiplot(fhspace, fvspace, fangle, floc, fradius, fnrow, fnwell, ftDrill, fcwell, fprodL,
+            frec, fxg, fgp, fIRR, cols = 4)
 }
 
 # Plot full dataset
-pdf(file.path(path$plot, "xy full multi v9.pdf"))
+pdf(file.path(path$plot, "xy full multi v11.pdf"), width = 11, height = 11)
 multi.xyhex(r = results, logflag = TRUE)
 dev.off()
 
 # Plot reduced results
-pdf(file.path(path$plot, "xyhex reduced v9.pdf"))
+pdf(file.path(path$plot, "xyhex reduced v11.pdf"), width = 11, height = 11)
 multi.xyhex(r = results[results$oilSP <= 175,], logflag = FALSE)
+dev.off()
+
+# NER hexbin plot
+pdf(file.path(path$plot, "NER full v10.pdf"))
+
+# Full set
+ggplot(results, aes(x = NER, y = oilSP)) +
+  stat_binhex(bins = 20) +
+  scale_fill_gradientn(colours = c("lightgrey","black")) +
+  theme_bw() +
+  xlab("NER") +
+  ylab("OSP ($/bbl)") +
+  guides(fill = FALSE) +
+  scale_y_continuous(trans = log10_trans(),
+                     breaks = c(10^2, 10^3, 10^4, 10^5),
+                     labels = trans_format("log10", math_format(10^.x)))
+dev.off()
+
+pdf(file.path(path$plot, "NER reduced v10.pdf"))
+
+# Reduced set
+ggplot(results[results$oilSP <= 175,], aes(x = NER, y = oilSP)) +
+  stat_binhex(bins = 20) +
+  scale_fill_gradientn(colours = c("lightgrey","black")) +
+  theme_bw() +
+  xlab("NER") +
+  ylab("OSP ($/bbl)") +
+  guides(fill = FALSE)
+
 dev.off()
 
 # Boxplots for economically viable set
@@ -372,120 +334,48 @@ dev.off()
 
 # Tables ------------------------------------------------------------------
 
-# Best scenarios by OSP
-r <- with(results, data.frame(design, LHS, oilSP, nwell, tDrill, well.cap, prodL, rec, xg, gp, IRR, NER))
+# Best scenarios by OSP - top 5 of econ parameter set
+r <- with(results, data.frame(design, LHS, oilSP, hspace, vspace, angle, loc, radius, nrow, nwell,
+                              tDrill, well.cap, prodL, rec, xg, gp, IRR))
 
-# Predefine results object
 bso <- NULL
-
-# For each of the top i results
 for (i in 1:5) {
 
-  # Find the LHS # of the lowest oilSP
+  # Get economic set with lowest oilSP
   lhsn <- r$LHS[which.min(r$oilSP)]
 
-  # Get row indices of lhsn in r
+  # Select only rows with that LHS
   ind <- which(r$LHS == lhsn)
-
-  # Get a temporary subset of r
   temp <- r[ind,]
 
   # Reorder according to OSP
   temp <- temp[order(temp$oilSP),]
 
-  # create table
-  dft <- as.data.frame(matrix(c(lhsn, temp$design[1:5], lhsn, round(temp$oilSP[1:5],2)), nrow = 2, byrow = T))
+  bso <- rbind(bso, c(temp[1,c("LHS", "tDrill", "well.cap", "prodL", "rec", "xg", "gp", "IRR")], min(temp$oilSP), max(temp$oilSP)))
 
-  # Change variable types and round
-  dft[c(1, 3, 5, 7, 9),] <- as.integer(dft[c(1, 3, 5, 7, 9),])
-  dft[c(2, 4, 6, 8, 10),] <- round(dft[c(2, 4, 6, 8, 10),], 2)
-
-  # Save out results
-  bso <- rbind(bso, dft)
-
-  # Drop all lhsn rows from r
+  # Drop current lhsn from r
   r <- r[-ind,]
 }
 
-# Worst scenarios by OSP
-r <- with(results, data.frame(design, LHS, oilSP, nwell, tDrill, well.cap, prodL, rec, xg, gp, IRR, NER))
+# Get top 5 of geometry parameter set
+r <- with(results, data.frame(design, LHS, oilSP, hspace, vspace, angle, loc, radius, nrow, nwell,
+                              tDrill, well.cap, prodL, rec, xg, gp, IRR))
 
-# Predefine results object
-wso <- NULL
-
-# For each of the top i results
+bso <- NULL
 for (i in 1:5) {
 
-  # Find the LHS # of the lowest oilSP
-  lhsn <- r$LHS[which.max(r$oilSP)]
+  # Get economic set with lowest oilSP
+  lhsn <- r$design[which.min(r$oilSP)]
 
-  # Get row indices of lhsn in r
-  ind <- which(r$LHS == lhsn)
-
-  # Get a temporary subset of r
+  # Select only rows with that LHS
+  ind <- which(r$design == lhsn)
   temp <- r[ind,]
 
   # Reorder according to OSP
-  temp <- temp[order(temp$oilSP, decreasing = T),]
+  temp <- temp[order(temp$oilSP),]
 
-  # create table
-  dft <- round(data.frame(matrix(c(lhsn, temp$design[1:5], lhsn, round(temp$oilSP[1:5],2)), nrow = 2, byrow = T)))
+  bso <- rbind(bso, c(temp[1,c("design", "hspace", "vspace", "angle", "loc", "radius", "nrow", "nwell")], min(temp$oilSP), max(temp$oilSP)))
 
-  # Save out results
-  wso <- rbind(wso, dft)
-
-  # Drop all lhsn rows from r
+  # Drop current lhsn from r
   r <- r[-ind,]
 }
-
-# Top 5 best/worst LHS scenario parameters table
-lhsn <- unique(c(bso[,1],wso[,1]))
-
-# Predefine results object
-bwso <- NULL
-
-for (i in 1:length(lhsn)) {
-
-  # Subset
-  temp <- results[results$LHS == lhsn[i],c("tDrill", "well.cap", "prodL", "rec", "xg", "gp", "IRR")]
-
-  # Change data types and round
-  temp$tDrill <- round(temp$tDrill)
-  temp$well.cap <- round(temp$well.cap/1e6,2)
-  temp$prodL <- round(temp$prodL/1e3,2)
-  temp[,c("rec", "xg", "gp", "IRR")] <- round(temp[,c("rec", "xg", "gp", "IRR")],2)
-
-  bwso <- rbind(bwso,
-                c(lhsn[i],unique(temp)))
-}
-
-# Predefine results
-cr <- matrix(0, nrow = 9, ncol = 242)
-pr <- cr
-
-# Get correlation coefficients and p-values for each ISD
-for (i in 1:242) {
-
-  # Get subset
-  temp <- corr.test(results[results$design == i,
-                            c("oilSP", "tDrill", "well.cap", "prodL", "rec", "xg", "gp", "IRR", "NER")])
-
-  # Extract values
-  cr[,i] <- temp$r[,1]
-  pr[,i] <- temp$p[,1]
-}
-
-# Make table
-cpr <- data.frame(rmean = rowMeans(cr), pmean = rowMeans(pr))
-
-# Drop first row and round r value
-cpr <- cpr[-1,]
-cpr$rmean <- round(cpr$rmean,2)
-
-
-# Energy demand curve -----------------------------------------------------
-
-test <-        read.csv(file.path(path$raw, "energy-164.csv"))
-test[,2:3] <-  test[,2:3]*(8500/uopt$base.prod)
-names(test) <- c("time","ce","ie")
-test$time <-   test$time/3600/24

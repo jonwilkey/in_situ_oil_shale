@@ -63,7 +63,7 @@ dcoil$time <-   dcoil$time/3600/24
 DT <- read.csv(file.path(path$raw, "242FinalDesignTable.csv"))
 
 # Rename
-names(DT) <- c("design", "TE", "mKerogen", "nwell", "normNER")
+names(DT) <- c("design", "TE", "mKerogen", "hspace", "vspace", "angle", "loc", "radius", "nrow", "nwell", "normNER")
 
 # Export result
 save(denergy, dcoil, DT, file = file.path(path$data, "dataImport.rda"))
