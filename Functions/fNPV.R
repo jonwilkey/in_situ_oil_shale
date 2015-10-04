@@ -20,7 +20,7 @@
 
 
 # Function ----------------------------------------------------------------
-NPV <- function(op) {
+fNPV <- function(op) {
 
   # Oil Sales
   osale <- model$oilp*op
@@ -45,7 +45,7 @@ NPV <- function(op) {
   admin.comp <- -uopt$radmin.comp*ifelse(NP > 0, NP, 0)
 
   # Final cash flow
-  CF <- osale+ro+sto+TS+TF+admin.comp+with(model, gsale+rg+stg+opPSS+opheat+fixed+CTDC+CD+CWD+CSt+CWC)
+  CF <- osale+ro+sto+TS+TF+admin.comp+with(model, gsale+rg+stg+opPSS+opheat+fixed+CTDC+CD+CWD+CSt+CWC+CWR)
 
   # Final NPV
   NPV <- sum(model$df*CF)

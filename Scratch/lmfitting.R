@@ -42,15 +42,18 @@ mtv <- with(results, c(median(hspace),
                        median(IRR)))
 
 # Barplot
+# setEPS()
+# postscript(file.path(path$plot, "test.eps"))
+# tiff(file.path(path$plot, "lm barplot v10.tif"), res=600, compression = "lzw", height=7, width=10, units="in")
 pdf(file.path(path$plot, "lm barplot v10.pdf"), width = 10, height = 7)
 barplot(mtv*coefficients(test)/max(mtv*coefficients(test)),
         ylim = c(-1,1),
         ylab = "Relative OSP Impact",
-        xlab = "Input Parameter",
+        #xlab = "Input Parameter",
         names.arg = c(expression(H[space]),
                       expression(V[space]),
                       expression(V[angle]),
-                      expression(V[location]),
+                      expression(V[loc]),
                       "r",
                       expression(n[row]),
                       expression(n[well]),

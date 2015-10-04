@@ -67,6 +67,9 @@ uopt$wellDesign <- data.frame(turnrate =   3,    # Turning rate (deg./pipe)
 # Number of rigs
 uopt$nrig <- 14
 
+# Well reclamation cost ($/well) inflation adjusted from 2009 USD
+uopt$wellrec <- 27555*(uopt$cpi/214.537)
+
 
 # Product properties ------------------------------------------------------
 
@@ -111,6 +114,9 @@ uopt$opPSSbase <-  100
 
 # Number of operators per shift
 uopt$Nopers <- 3
+
+# Salary
+uopt$salary <- 127e3
 
 
 # Utilities ---------------------------------------------------------------

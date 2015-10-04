@@ -9,7 +9,20 @@
 # simualtions prepared for ICSE by Michal Hradisky. Structure is as follows:
 #
 # 1. Sets working directory, libraries, and options
-# 2. BLAH
+# 2. Loads prepared data files with mass and energy balances for all 242 CFD
+#    simulations.
+# 3. Combines the economic parameters in UO_options.R with each CFD design.
+# 4. For each scenario, the script:
+#    a. Scales the mass and energy balance
+#    b. Calculates the capital and operating costs
+#    c. Makes a data.frame with one column for each term in the cash flow
+#       balance equation
+#    d. Solves for the oil price that gives a NPV = 0
+#    e. Saves out all of the cost and scaled parameter details
+# 5. To use, set desired input options in UO_options.R and the source this
+#    script. The data.frame "results" can then be analyzed. Example plots are
+#    available in the function "plots v1.R" located in the "Scratch" folder.
+
 
 # 1.1 Paths ---------------------------------------------------------------
 
@@ -18,25 +31,19 @@ path <- NULL
 
 # Path switch - uncomment and/or replace with the path directory for your local
 # copy of the Git repository and Dropbox files.
-pwd.drop <- "C:/Users/jonwi/"                 # Desktop
-pwd.git  <- "C:/Users/jonwi/Documents/R/"
-# pwd.drop <- "C:/Users/Jon Wilkey/"              # Laptop
-# pwd.git  <- "C:/Users/Jon Wilkey/Documents/R/"
+pwd.git  <- "C:/Users/Jon Wilkey/Documents/R/"
 
 # Define paths.
-# "raw"  is raw data (*.dbf files from DOGM, *.csv files, etc.).
+# "raw"  is raw data (*.csv files, etc.).
 # "data" is prepared data files (typically *.rda).
-# "look" is lookup tables.
 # "plot" is the directory for saving plot *.pdf files.
-# "work" is the working directory where main.R and IO_options.R are located.
+# "work" is the working directory where UO_main.R and UO_options.R are located.
 # "fun"  is the directory for all *.R functions.
-path$raw   <- paste(pwd.drop, "Dropbox/Oil Shale/Raw Data", sep = "")
-path$data  <- paste(pwd.drop, "Dropbox/Oil Shale/Prepared Data", sep = "")
-path$plot  <- paste(pwd.drop, "Dropbox/Oil Shale/Plots", sep = "")
-path$work  <- paste(pwd.git,  "oilshale/", sep = "")
-path$fun   <- paste(pwd.git,  "oilshale/Functions", sep = "")
-path$BCfig <- paste(pwd.drop, "Dropbox/Oil Shale/Book Chapter/Figures", sep = "")
-path$Cdata <- paste(pwd.drop, "Dropbox/CLEAR/DOGM Data/Prepared Data", sep = "")
+path$raw   <- paste(pwd.git, "oilshale/Raw Data", sep = "")
+path$data  <- paste(pwd.git, "oilshale/Prepared Data", sep = "")
+path$plot  <- paste(pwd.git, "oilshale/Plots", sep = "")
+path$work  <- paste(pwd.git, "oilshale/", sep = "")
+path$fun   <- paste(pwd.git, "oilshale/Functions", sep = "")
 
 # Remove temporary path objects
 remove(pwd.drop, pwd.git)
@@ -57,19 +64,20 @@ flst <- file.path(path$fun, c("wtRadius.R",
                               "fCFterms.R",
                               "asYear.R",
                               "multiplot.R",
+                              "logGrid.R",
                               "clipboard.R"))
 
 # Load each function in list then remove temporary file list variables
 for (f in flst) source(f); remove(f, flst)
 
 
-# 1.3 Libraries -----------------------------------------------------------
+# 1.3 Packages ------------------------------------------------------------
 
 library(zoo)
 library(sqldf)
 library(lhs)
 library(beepr)
-library(ggplot2)
+library(ggplot2) # Note - "hexbin" package must also be installed, but doesn't need to be loaded
 library(scales)
 
 
@@ -117,6 +125,7 @@ fc.RIP <-    oilSP
 fc.start <-  oilSP
 fc.wells <-  oilSP
 fc.WC <-     oilSP
+fc.WR <-     oilSP
 pb.cap <-    oilSP
 pb.loai <-   oilSP
 pb.rstp <-   oilSP
@@ -160,6 +169,9 @@ for (j in 1:nrow(parR)) {
 
   # Calculate capital cost for wells
   capwell <- drillsched*parR$well.cap[j]
+
+  # Calculate capital cost for well reclamation = (# of wells)($/well)
+  capwellRec <- parR$nwell[j]*uopt$wellrec
 
 
   # Scale and Fit Base Data ------------------------------------
@@ -230,12 +242,12 @@ for (j in 1:nrow(parR)) {
 
   # Capital Costing ---------------------------------------------------------
 
-  ccs <- fcap(capheat, capPSS, capU, oil, capwell)
+  ccs <- fcap(capheat, capPSS, capU, oil, capwell, capwellRec)
 
 
   # Fixed Costs -------------------------------------------------------------
 
-  opF <- ffoc(Nopers = uopt$Nopers, CTDC = ccs$TDC, CTPI = ccs$TPI)
+  opF <- ffoc(Nopers = uopt$Nopers, CTDC = ccs$TDC, CTPI = ccs$TPI, salary = uopt$salary)
 
 
   # DCF Analysis ------------------------------------------------------------
@@ -263,6 +275,10 @@ for (j in 1:nrow(parR)) {
                  -ccs$WC,
                  rep(x = 0, times = length(oil)-2),
                  ccs$WC)
+
+  # Well reclamation
+  model$CWR <- c(rep(x = 0, times = nrow(model)-1),
+                 -ccs$wellRec)
 
   # Gas production
   model$gasp <- c(rep(x = 0, times = tdesign+tconstr),
@@ -310,7 +326,7 @@ for (j in 1:nrow(parR)) {
   # Solve for oil price -----------------------------------------------------
 
   # Oil Supply Price
-  oilSP[j] <- uniroot(NPV, lower = 0, upper = 1e7)$root
+  oilSP[j] <- uniroot(fNPV, lower = 0, upper = 1e7)$root
 
 
   # Calculate $/bbl cash flows ----------------------------------------------
@@ -328,12 +344,13 @@ for (j in 1:nrow(parR)) {
   fc.start[j] <-  with(ccs, Start/TCI)  # Startup
   fc.wells[j] <-  with(ccs, Wells/TCI)  # Wells
   fc.WC[j] <-     with(ccs, WC/TCI)     # Working capital
+  fc.WR[j] <-     with(ccs, wellRec/TCI)     # Well reclamation
 
   # Run fCFterms function to get terms in cash flow equation that depend on oil
   CF <- fCFterms(oilSP[j])
 
   # Per barrel
-  pb.cap[j] <-  with(model, sum(CTDC+CD+CWD+CSt+CWC))/sum(oil)                                    # Capital
+  pb.cap[j] <-  with(model, sum(CTDC+CD+CWD+CSt+CWC+CWR))/sum(oil)                                    # Capital
   pb.loai[j] <- (sum(model$fixed)+sum(0.01*ccs$TPI)+sum(CF$admin.comp))/sum(oil)                  # Labor, maint., overhead, admin salary + comp, insurance
   pb.rstp[j] <- (sum(with(CF, ro+sto+TS+TF))+sum(with(model, rg+stg))-sum(0.01*ccs$TPI))/sum(oil) # Royalties, serverance, income tax, and property taxes
   pb.royl[j] <- (sum(CF$ro)+sum(model$rg))/sum(oil)                                               # Royalties only
@@ -390,6 +407,7 @@ results <- data.frame(parR,
                       fc.start,
                       fc.wells,
                       fc.WC,
+                      fc.WR,
                       pb.cap,
                       pb.loai,
                       pb.rstp,

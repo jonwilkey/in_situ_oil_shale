@@ -25,14 +25,14 @@
 
 
 # Function ----------------------------------------------------------------
-ffoc <- function(Nopers, CTDC, CTPI) {
+ffoc <- function(Nopers, CTDC, CTPI, salary) {
 
   # Labor for operations
   LW <-   Nopers*5*2080*30 # Labor wages
   LS <-   0.15*LW          # Labor salaries
   opSS <- 0.06*LW          # Operating supplies and services
-  TA <-   65e3*5           # Technical assistance
-  CL <-   71e3*5           # Control laboratory
+  TA <-   salary*5           # Technical assistance
+  CL <-   salary*5           # Control laboratory
   L <-    LW+LS+opSS+TA+CL # Labor total
 
   # Maintenance
