@@ -16,7 +16,7 @@
 uopt <- NULL
 
 # Version #
-uopt$ver <- "v9"
+uopt$ver <- "v1"
 
 # One-time analysis functions ---------------------------------------------
 
@@ -27,7 +27,7 @@ uopt$ver <- "v9"
 # Parameter Space Generation ----------------------------------------------
 
 # Generate latin hypercube sample - Uncomment first line for new sample,
-# otherwise load saved one.
+# otherwise load saved one. Note - generating a new LHS set will take a long time.
 # parLHS <- optimumLHS(n = 4*(2^7), k = 7); save(parLHS, file = file.path(path$data, "parLHS.rda"))
 load(file.path(path$data, "parLHS.rda"))
 
