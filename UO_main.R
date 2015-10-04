@@ -31,6 +31,7 @@ path <- NULL
 
 # Path switch - uncomment and/or replace with the path directory for your local
 # copy of the Git repository and Dropbox files.
+pwd.drop <- "C:/Users/Jon Wilkey/"
 pwd.git  <- "C:/Users/Jon Wilkey/Documents/R/"
 
 # Define paths.
@@ -39,11 +40,11 @@ pwd.git  <- "C:/Users/Jon Wilkey/Documents/R/"
 # "plot" is the directory for saving plot *.pdf files.
 # "work" is the working directory where UO_main.R and UO_options.R are located.
 # "fun"  is the directory for all *.R functions.
-path$raw   <- paste(pwd.git, "oilshale/Raw Data", sep = "")
-path$data  <- paste(pwd.git, "oilshale/Prepared Data", sep = "")
-path$plot  <- paste(pwd.git, "oilshale/Plots", sep = "")
-path$work  <- paste(pwd.git, "oilshale/", sep = "")
-path$fun   <- paste(pwd.git, "oilshale/Functions", sep = "")
+path$raw   <- paste(pwd.drop, "Dropbox/Oil Shale/Raw Data", sep = "")
+path$data  <- paste(pwd.drop, "Dropbox/Oil Shale/Prepared Data", sep = "")
+path$plot  <- paste(pwd.drop, "Dropbox/Oil Shale/Plots", sep = "")
+path$work  <- paste(pwd.git,  "oilshale/", sep = "")
+path$fun   <- paste(pwd.git,  "oilshale/Functions", sep = "")
 
 # Remove temporary path objects
 remove(pwd.drop, pwd.git)
