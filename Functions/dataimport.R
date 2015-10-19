@@ -67,3 +67,95 @@ names(DT) <- c("design", "TE", "mKerogen", "hspace", "vspace", "angle", "loc", "
 
 # Export result
 save(denergy, dcoil, DT, file = file.path(path$data, "dataImport.rda"))
+
+
+# Well Data ---------------------------------------------------------------
+
+# Read in wellData.csv
+welldata <- read.csv(file.path(path$raw, "wellData.csv"))
+
+# Change names
+names(welldata) <- c("api",
+                     "dSpud",
+                     "dDepth",
+                     "dCased",
+                     "dCompl",
+                     "tdSpudCompl",
+                     "depth",
+                     "vertLength",
+                     "latLength",
+                     "field",
+                     "county",
+                     "wellType",
+                     "operator",
+                     "nomDrillC",
+                     "nomCaseC",
+                     "nomComplC",
+                     "cpi",
+                     "adDrillC",
+                     "adComplC")
+
+# Change variable types
+welldata$dSpud <-  as.Date(welldata$dSpud)
+welldata$dDepth <- as.Date(welldata$dDepth)
+welldata$dCased <- as.Date(welldata$dCased)
+welldata$dCompl <- as.Date(welldata$dCompl)
+
+# Calculate drilling time
+welldata$tdSpudTD <- as.numeric(difftime(welldata$dDepth, welldata$dSpud, units = "days"))
+
+# Fit drilling time data parameters
+temp <- fitdist(welldata$tdSpudTD[which(!is.na(welldata$tdSpudTD))], "lnorm")
+input.par <- data.frame(par1 = coef(temp)[1],
+                        par2 = coef(temp)[2])
+
+# Get drilling costs parameters
+temp <- fitdist(welldata$adDrillC[which(!is.na(welldata$adDrillC))], "norm")
+input.par <- rbind(input.par,
+                   data.frame(par1 = coef(temp)[1],
+                              par2 = coef(temp)[2]))
+
+# Get completion costs parameters
+temp <- fitdist(welldata$adComplC[which(!is.na(welldata$adComplC))], "lnorm")
+input.par <- rbind(input.par,
+                   data.frame(par1 = coef(temp)[1],
+                              par2 = coef(temp)[2]))
+
+# Get well length parameters
+temp <- fitdist(welldata$depth[welldata$depth > 0], "lnorm")
+input.par <- rbind(input.par,
+                   data.frame(par1 = coef(temp)[1],
+                              par2 = coef(temp)[2]))
+
+# Get gas price parameters
+
+# Load data (eia.hp)
+load("C:/Users/jonwi/Dropbox/CLEAR/DOGM Data/Prepared Data/EIAprices_v8.rda")
+
+# Select only the last five years of data
+gp <- eia.hp$GP[(nrow(eia.hp)-59):nrow(eia.hp)]
+
+# Fit data
+temp <- fitdist(gp, "norm")
+input.par <- rbind(input.par,
+                   data.frame(par1 = coef(temp)[1],
+                              par2 = coef(temp)[2]))
+
+# Recovery fraction
+temp <- c(0.8, 0.9)
+input.par <- rbind(input.par,
+                   data.frame(par1 = mean(temp),
+                              par2 = sd(temp)))
+
+# Gas fraction
+temp <- c(0.25, 0.33)
+input.par <- rbind(input.par,
+                   data.frame(par1 = mean(temp),
+                              par2 = sd(temp)))
+
+# Change row.names
+row.names(input.par) <- c("tDrill", "drillC", "complC", "depth", "gp", "rec", "xg")
+
+# Save out result
+save(input.par, file = file.path(path$data, "inputParamValues.rda"))
+
