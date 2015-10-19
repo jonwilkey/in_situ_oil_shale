@@ -31,8 +31,8 @@ path <- NULL
 
 # Path switch - uncomment and/or replace with the path directory for your local
 # copy of the Git repository and Dropbox files.
-pwd.drop <- "C:/Users/Jon Wilkey/"
-pwd.git  <- "C:/Users/Jon Wilkey/Documents/R/"
+pwd.drop <- "C:/Users/jonwi/"
+pwd.git  <- "C:/Users/jonwi/Documents/R/"
 
 # Define paths.
 # "raw"  is raw data (*.csv files, etc.).
@@ -80,6 +80,7 @@ library(lhs)
 library(beepr)
 library(ggplot2) # Note - "hexbin" package must also be installed, but doesn't need to be loaded
 library(scales)
+library(fitdistrplus)
 
 
 # 1.4 Options -------------------------------------------------------------
@@ -101,6 +102,9 @@ temp1 <- data.frame(index = rep(1, times = nrow(DT)), DT)
 temp2 <- data.frame(index = rep(1, times = nrow(uopt$parR)), uopt$parR)
 parR <- merge(x = temp1, y = temp2, all = T); remove(temp1, temp2)
 parR <- parR[,-1]
+
+# # Uncomment me and edit row selection to run just a subset
+# parR <- parR[1:1e1,]
 
 
 # Loop --------------------------------------------------------------------
@@ -141,10 +145,15 @@ meanE <-     oilSP
 # Progress Bar (since this next for-loop takes a while)
 pb <- txtProgressBar(min = 0, max = nrow(parR), width = 75, style = 3)
 
+runStart <- Sys.time()
+
 # For each set of input parameter picks j
 for (j in 1:nrow(parR)) {
 
   # x.x Drilling ------------------------------------------------------------
+
+  # Number of producers
+  prodW <- ceiling(parR$nwell[j]/uopt$HPratio)
 
   # Calculate well segment lengths
   wellL <- data.frame(turn = wtRadius(t = uopt$wellDesign$turnrate,
@@ -155,13 +164,15 @@ for (j in 1:nrow(parR)) {
   wellL$prod <- wellL$total-(wellL$stem+wellL$turn)
 
   # Calculate well drilling schedule
-  drillsched <- rep(c(rep(0, parR$tDrill[j]-1), uopt$nrig), ceiling(parR$nwell[j]/uopt$nrig))
+  drillsched <- rep(c(rep(0, parR$tDrill[j]-1), uopt$nrig),
+                    ceiling((parR$nwell[j]+prodW)/uopt$nrig))
 
   # If too many wells were drilled in last time step
-  if (sum(drillsched) > parR$nwell[j]) {
+  if (sum(drillsched) > (parR$nwell[j]+prodW)) {
 
     # Replace last entry with correct number of wells
-    drillsched[length(drillsched)] <- parR$nwell[j]-sum(drillsched[1:(length(drillsched)-1)])
+    drillsched[length(drillsched)] <- (parR$nwell[j]+prodW)-
+      sum(drillsched[1:(length(drillsched)-1)])
   }
 
   # Design and construction time
@@ -169,10 +180,10 @@ for (j in 1:nrow(parR)) {
   tdesign <- round(tconstr/3)
 
   # Calculate capital cost for wells
-  capwell <- drillsched*parR$well.cap[j]
+  capwell <- drillsched*(parR$well.cap[j]+parR$compl.cap[j]*(1/uopt$HPratio))
 
   # Calculate capital cost for well reclamation = (# of wells)($/well)
-  capwellRec <- parR$nwell[j]*uopt$wellrec
+  capwellRec <- (parR$nwell[j]+prodW)*uopt$wellrec
 
 
   # Scale and Fit Base Data ------------------------------------
@@ -222,9 +233,9 @@ for (j in 1:nrow(parR)) {
 
   # Capital cost formula:
   #
-  # capPSS = base(func. of length)*(new max oil/base max oil)^0.6*nwell
+  # capPSS = base(func. of length)*(new max oil/base max oil)^0.6*(producer wells)
   #
-  capPSS <- uopt$fcapPSS(wellL$total)*(max(oil)/parR$nwell[j]/uopt$capPSSbase)^0.6*parR$nwell[j]
+  capPSS <- uopt$fcapPSS(wellL$total)*(max(oil)/prodW/uopt$capPSSbase)^0.6*prodW
 
   # Operating cost formula:
   #
@@ -333,19 +344,19 @@ for (j in 1:nrow(parR)) {
   # Calculate $/bbl cash flows ----------------------------------------------
 
   # Capital cost fractions
-  fc.heat[j] <-   capheat/ccs$TCI       # Heating
-  fc.PSS[j] <-    capPSS/ccs$TCI        # Product separation and storage
-  fc.site[j] <-   with(ccs, Site/TCI)   # Site
-  fc.serv[j] <-   with(ccs, Serv/TCI)   # Service facilities
-  fc.util[j] <-   with(ccs, capU/TCI)   # Utilities (i.e. electrical grid connection)
-  fc.cont[j] <-   with(ccs, Cont/TCI)   # Contingency
-  fc.land[j] <-   with(ccs, Land/TCI)   # Land
-  fc.permit[j] <- with(ccs, Permit/TCI) # Permitting
-  fc.RIP[j] <-    with(ccs, RIP/TCI)    # Royalties for intellectual property
-  fc.start[j] <-  with(ccs, Start/TCI)  # Startup
-  fc.wells[j] <-  with(ccs, Wells/TCI)  # Wells
-  fc.WC[j] <-     with(ccs, WC/TCI)     # Working capital
-  fc.WR[j] <-     with(ccs, wellRec/TCI)     # Well reclamation
+  fc.heat[j] <-   capheat/ccs$TCI        # Heating
+  fc.PSS[j] <-    capPSS/ccs$TCI         # Product separation and storage
+  fc.site[j] <-   with(ccs, Site/TCI)    # Site
+  fc.serv[j] <-   with(ccs, Serv/TCI)    # Service facilities
+  fc.util[j] <-   with(ccs, capU/TCI)    # Utilities (i.e. electrical grid connection)
+  fc.cont[j] <-   with(ccs, Cont/TCI)    # Contingency
+  fc.land[j] <-   with(ccs, Land/TCI)    # Land
+  fc.permit[j] <- with(ccs, Permit/TCI)  # Permitting
+  fc.RIP[j] <-    with(ccs, RIP/TCI)     # Royalties for intellectual property
+  fc.start[j] <-  with(ccs, Start/TCI)   # Startup
+  fc.wells[j] <-  with(ccs, Wells/TCI)   # Wells
+  fc.WC[j] <-     with(ccs, WC/TCI)      # Working capital
+  fc.WR[j] <-     with(ccs, wellRec/TCI) # Well reclamation
 
   # Run fCFterms function to get terms in cash flow equation that depend on oil
   CF <- fCFterms(oilSP[j])
@@ -424,3 +435,7 @@ save(results, file = file.path(path$data, paste("UO_main Results ", uopt$ver, ".
 write.csv(x =    results[,1:29], # change me if more columns are add/shifted around
           file = file.path(path$data, paste("UO_main Results ", uopt$ver, ".csv", sep = "")),
           row.names = F)
+
+# Stop and run times
+runStop <- Sys.time()
+print(difftime(runStop,runStart))
