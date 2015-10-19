@@ -37,7 +37,7 @@
 
 # Load required *.csv and *.rda data files
 data <- read.csv(file.path(path$raw, "hD&C costs.csv"))
-load(file.path(path$Cdata, "production_v5.rda"))
+load(file.path(path$data, "production_v5.rda"))
 load(file.path(path$data, "cpi.rda"))
 
 # Change names
@@ -95,7 +95,7 @@ tDrill <- round(median(p$dt, na.rm = T))
 # Gas wellhead prices -----------------------------------------------------
 
 # Load EIA price history file
-load(file.path(path$Cdata, "EIAprices_v5.rda"))
+load(file.path(path$data, "EIAprices_v5.rda"))
 
 # Subset price range
 eia.hp <- subset(eia.hp, subset = (as.Date(month) >= as.Date("2010-01-01")))
