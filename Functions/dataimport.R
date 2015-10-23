@@ -101,6 +101,27 @@ welldata$dDepth <- as.Date(welldata$dDepth)
 welldata$dCased <- as.Date(welldata$dCased)
 welldata$dCompl <- as.Date(welldata$dCompl)
 
+# Plotting function
+tempPlot <- function(a, lab.x, lab.plot) {
+
+  # PDF plot
+  pdf(file.path(path$plot, paste(lab.plot,".pdf", sep = "")))
+  # cdfcomp(temp, horizontals = F, addlegend = F, datapch = 1, xlab = lab.x, ylab = "Cumulative Probability", main = "")
+  # legend("bottomright", c("Data", "Fit"), pch = c(1, NA), lty = c(NA, 1), col = c("black","red"))
+  denscomp(temp, probability = T, addlegend = F, xlab = lab.x, ylab = "Probability Density", main = "")
+  rug(jitter(temp$data))
+  dev.off()
+
+  # EPS plot
+  setEPS()
+  postscript(file.path(path$plot, paste(lab.plot,".eps", sep = "")))
+  # cdfcomp(temp, horizontals = F, addlegend = F, datapch = 1, xlab = lab.x, ylab = "Cumulative Probability", main = "")
+  # legend("bottomright", c("Data", "Fit"), pch = c(1, NA), lty = c(NA, 1), col = c("black","red"))
+  denscomp(temp, probability = T, addlegend = F, xlab = lab.x, ylab = "Probability Density", main = "")
+  rug(jitter(temp$data))
+  dev.off()
+}
+
 # Calculate drilling time
 welldata$tdSpudTD <- as.numeric(difftime(welldata$dDepth, welldata$dSpud, units = "days"))
 
@@ -108,24 +129,29 @@ welldata$tdSpudTD <- as.numeric(difftime(welldata$dDepth, welldata$dSpud, units 
 temp <- fitdist(welldata$tdSpudTD[which(!is.na(welldata$tdSpudTD))], "lnorm")
 input.par <- data.frame(par1 = coef(temp)[1],
                         par2 = coef(temp)[2])
+tempPlot(temp, "Well Drilling Time (days)", "Figure 11-3 Well drilling time fitted CDF")
 
 # Get drilling costs parameters
-temp <- fitdist(welldata$adDrillC[which(!is.na(welldata$adDrillC))], "norm")
+temp <- fitdist(welldata$adDrillC[which(!is.na(welldata$adDrillC))]/1e6, "norm")
 input.par <- rbind(input.par,
                    data.frame(par1 = coef(temp)[1],
                               par2 = coef(temp)[2]))
+tempPlot(temp, "Drilling Cost ($1e6)", "Figure 11-4 Drilling cost fitted CDF")
 
 # Get completion costs parameters
 temp <- fitdist(welldata$adComplC[which(!is.na(welldata$adComplC))], "lnorm")
 input.par <- rbind(input.par,
                    data.frame(par1 = coef(temp)[1],
                               par2 = coef(temp)[2]))
+tempPlot(temp, "Completion Cost ($1e6)", "Figure 11-5 Completion cost fitted CDF")
 
 # Get well length parameters
-temp <- fitdist(welldata$depth[welldata$depth > 0], "lnorm")
+temp <- fitdist(welldata$depth[welldata$depth > 0]/1e3, "lnorm")
 input.par <- rbind(input.par,
                    data.frame(par1 = coef(temp)[1],
                               par2 = coef(temp)[2]))
+tempPlot(temp, "Total Well Length (1e3 ft)", "Figure 11-2 Total well length fitted CDF")
+
 
 # Get gas price parameters
 
@@ -140,6 +166,7 @@ temp <- fitdist(gp, "norm")
 input.par <- rbind(input.par,
                    data.frame(par1 = coef(temp)[1],
                               par2 = coef(temp)[2]))
+tempPlot(temp, "Natural Gas Price ($ / MCF)", "Figure 11-7 Natural gas prices fitted CDF")
 
 # Recovery fraction
 temp <- c(0.8, 0.9)

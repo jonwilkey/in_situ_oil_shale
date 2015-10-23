@@ -1,5 +1,24 @@
 load(file.path(path$data, paste("UO_main Results ", uopt$ver, ".rda", sep = "")))
 
+# Price cutoff for economic viability
+eia.op <- read.csv(file.path(path$raw, "EIA2015AEO highoilOP.csv"), skip = 4)
+names(eia.op) <- c("year", "op")
+
+# Prices are in 2013 dollars (CPI = 232.957), adjust to 2014 USD
+eia.op$op <- eia.op$op * (uopt$cpi / 232.957)
+
+price.cut <- mean(eia.op$op[eia.op$year >= 2015])
+
+# # Repeat for reference price forecast
+# eia.op <- read.csv(file.path(path$raw, "EIA2015AEO refoilOP.csv"), skip = 4)
+# names(eia.op) <- c("year", "op")
+#
+# # Prices are in 2013 dollars (CPI = 232.957), adjust to 2014 USD
+# eia.op$op <- eia.op$op * (uopt$cpi / 232.957)
+#
+# price.cut.ref <- mean(eia.op$op[eia.op$year >= 2015])
+
+
 # Black and white theme with no y axis label
 theme_bw_noy <- function (base_size = 12, base_family = "") {
   theme_grey(base_size = base_size, base_family = base_family) %+replace%
@@ -119,15 +138,28 @@ multi.xyhex <- function(r, logflag) {
                                         labels = trans_format("log10", math_format(10^.x)))
   }
 
-  fcwell <- ggplot(r, aes(x = well.cap/1e6, y = oilSP)) +
+  fcdrill <- ggplot(r, aes(x = well.cap/1e6, y = oilSP)) +
     stat_binhex(bins = 20) +
     scale_fill_gradientn(colours = c("lightgrey","black")) +
     theme_bw_noy() +
-    xlab(expression(paste(C[DC], " ($1e6)"))) +
+    xlab(expression(paste(C[Drill], " ($1e6)"))) +
     ylab("OSP ($ / bbl)") +
     guides(fill = FALSE)
   if (logflag == T) {
-    fcwell <- fcwell+scale_y_continuous(trans = log10_trans(),
+    fcdrill <- fcdrill+scale_y_continuous(trans = log10_trans(),
+                                        breaks = c(10^2, 10^3, 10^4, 10^5),
+                                        labels = trans_format("log10", math_format(10^.x)))
+  }
+
+  fccompl <- ggplot(r, aes(x = compl.cap/1e6, y = oilSP)) +
+    stat_binhex(bins = 20) +
+    scale_fill_gradientn(colours = c("lightgrey","black")) +
+    theme_bw_noy() +
+    xlab(expression(paste(C[Compl], " ($1e6)"))) +
+    ylab("OSP ($ / bbl)") +
+    guides(fill = FALSE)
+  if (logflag == T) {
+    fccompl <- fccompl+scale_y_continuous(trans = log10_trans(),
                                         breaks = c(10^2, 10^3, 10^4, 10^5),
                                         labels = trans_format("log10", math_format(10^.x)))
   }
@@ -175,7 +207,7 @@ multi.xyhex <- function(r, logflag) {
     stat_binhex(bins = 20) +
     scale_fill_gradientn(colours = c("lightgrey","black")) +
     theme_bw_noy() +
-    xlab(expression(paste(x[g]," ($ / MCF)"))) +
+    xlab(expression(paste(gp," ($ / MCF)"))) +
     ylab("OSP ($ / bbl)") +
     guides(fill = FALSE)
   if (logflag == T) {
@@ -197,27 +229,31 @@ multi.xyhex <- function(r, logflag) {
                                         labels = trans_format("log10", math_format(10^.x)))
   }
 
-
-
-  multiplot(fhspace, fvspace, fangle, floc, fradius, fnrow, fnwell, ftDrill, fcwell, fprodL,
-            frec, fxg, fgp, fIRR, cols = 4)
+  multiplot(fhspace, fvspace, fangle, floc, fradius, fnrow, fnwell, ftDrill, fcdrill,
+            fccompl, fprodL, frec, fxg, fgp, fIRR, cols = 4)
 }
 
 # Plot full dataset
-pdf(file.path(path$plot, "xy full multi v11.pdf"), width = 11, height = 11)
+pdf(file.path(path$plot, "Figure 11-8 Full OSP hexbin v14.pdf"), width = 11, height = 11)
+multi.xyhex(r = results, logflag = TRUE)
+dev.off()
+setEPS(width = 11, height = 11)
+postscript(file.path(path$plot, "Figure 11-8 Full OSP hexbin v14.eps"))
 multi.xyhex(r = results, logflag = TRUE)
 dev.off()
 
 # Plot reduced results
-pdf(file.path(path$plot, "xyhex reduced v11.pdf"), width = 11, height = 11)
-multi.xyhex(r = results[results$oilSP <= 175,], logflag = FALSE)
+pdf(file.path(path$plot, "Figure 11-9 Reduced OSP hexbin v14.pdf"), width = 11, height = 11)
+multi.xyhex(r = results[results$oilSP <= price.cut,], logflag = FALSE)
+dev.off()
+setEPS(width = 11, height = 11)
+postscript(file.path(path$plot, "Figure 11-9 Reduced OSP hexbin v14.eps"))
+multi.xyhex(r = results, logflag = TRUE)
 dev.off()
 
-# NER hexbin plot
-pdf(file.path(path$plot, "NER full v10.pdf"))
 
-# Full set
-ggplot(results, aes(x = NER, y = oilSP)) +
+# Full OSP NER set
+NERfull <- ggplot(results, aes(x = NER, y = oilSP)) +
   stat_binhex(bins = 20) +
   scale_fill_gradientn(colours = c("lightgrey","black")) +
   theme_bw() +
@@ -227,12 +263,17 @@ ggplot(results, aes(x = NER, y = oilSP)) +
   scale_y_continuous(trans = log10_trans(),
                      breaks = c(10^2, 10^3, 10^4, 10^5),
                      labels = trans_format("log10", math_format(10^.x)))
+
+pdf(file.path(path$plot, "Figure 11-10 OSP vs NER v14.pdf"))
+NERfull
+dev.off()
+setEPS()
+postscript(file.path(path$plot, "Figure 11-10 OSP vs NER v14.eps"))
+NERfull
 dev.off()
 
-pdf(file.path(path$plot, "NER reduced v10.pdf"))
-
-# Reduced set
-ggplot(results[results$oilSP <= 175,], aes(x = NER, y = oilSP)) +
+# Reduced OSP NER set
+NERred <- ggplot(results[results$oilSP <= price.cut,], aes(x = NER, y = oilSP)) +
   stat_binhex(bins = 20) +
   scale_fill_gradientn(colours = c("lightgrey","black")) +
   theme_bw() +
@@ -240,9 +281,17 @@ ggplot(results[results$oilSP <= 175,], aes(x = NER, y = oilSP)) +
   ylab("OSP ($/bbl)") +
   guides(fill = FALSE)
 
+pdf(file.path(path$plot, "Figure 11-11 Reduced OSP vs NER v14.pdf"))
+NERred
+dev.off()
+setEPS()
+postscript(file.path(path$plot, "Figure 11-11 Reduced OSP vs NER v14.eps"))
+NERred
 dev.off()
 
+
 # Boxplots for economically viable set
+r <- results[results$oilSP <= price.cut,]
 
 # Reshape
 bdr <- rbind(data.frame(type = as.factor("CTPI"),   cost = (-r$pb.cap)),
@@ -256,7 +305,8 @@ bdr <- rbind(data.frame(type = as.factor("CTPI"),   cost = (-r$pb.cap)),
 # Drop any negatives
 bdr <- bdr[bdr$cost >= 0,]
 
-pdf(file.path(path$plot, "costs per bbl.pdf"))
+# Plot
+pdf(file.path(path$plot, "Figure 11-14 Boxplot costs per bbl v14.pdf"))
 
 boxplot(cost~type, bdr,
         range = 0,
@@ -272,7 +322,22 @@ boxplot(cost~type, bdr,
 
 dev.off()
 
-r <- results[results$oilSP <= 175,]
+setEPS()
+postscript(file.path(path$plot, "Figure 11-14 Boxplot costs per bbl v14.eps"))
+
+boxplot(cost~type, bdr,
+        range = 0,
+        names = c(expression(C[TPI]),
+                  expression(C[V]),
+                  expression(C[F]),
+                  expression(R),
+                  expression(T[F] + T[S]),
+                  expression(ST),
+                  "Profit"),
+        xlab = "Cost Category",
+        ylab = "Cost ($/bbl)")
+
+dev.off()
 
 # Repeat for capital
 cdr <- rbind(data.frame(type = as.factor("heat"),   frac = r$fc.heat),
@@ -299,7 +364,39 @@ cdrc <- rbind(data.frame(type = as.factor("heat"),   frac = r$fc.heat*r$TCI),
               data.frame(type = as.factor("wells"),  frac = r$fc.wells*r$TCI),
               data.frame(type = as.factor("WC"),     frac = r$fc.WC*r$TCI))
 
-pdf(file.path(path$plot, "capital cost boxplot.pdf"))
+pdf(file.path(path$plot, "Figure 11-13 Boxplot capital costs v14.pdf"))
+
+boxplot(frac~type, cdrc,
+        range = 0,
+        log = "y",
+        ylim = c(5e5, 5e9),
+        yaxt = "n",
+        names = c("Heat",
+                  "PSS",
+                  expression(C[SS]),
+                  expression(C[alloc]),
+                  expression(C[cont]),
+                  expression(C[L]),
+                  expression(C[P]),
+                  expression(C[RIP]),
+                  expression(C[S]),
+                  expression(C[DC]),
+                  expression(C[WC])),
+        xlab = "Capital Cost Category",
+        ylab = expression(paste("Capital Cost ($)")))
+axis(side = 2, at = c(1e5, 1e6, 1e7, 1e8, 1e9, 1e10),
+     labels = c(expression(10^5),
+                expression(10^6),
+                expression(10^7),
+                expression(10^8),
+                expression(10^9),
+                expression(10^10)),
+     las = 2)
+
+dev.off()
+
+setEPS()
+postscript(file.path(path$plot, "Figure 11-13 Boxplot capital costs v14.eps"))
 
 boxplot(frac~type, cdrc,
         range = 0,
@@ -331,51 +428,50 @@ axis(side = 2, at = c(1e5, 1e6, 1e7, 1e8, 1e9, 1e10),
 dev.off()
 
 
-
-# Tables ------------------------------------------------------------------
-
-# Best scenarios by OSP - top 5 of econ parameter set
-r <- with(results, data.frame(design, LHS, oilSP, hspace, vspace, angle, loc, radius, nrow, nwell,
-                              tDrill, well.cap, prodL, rec, xg, gp, IRR))
-
-bso <- NULL
-for (i in 1:5) {
-
-  # Get economic set with lowest oilSP
-  lhsn <- r$LHS[which.min(r$oilSP)]
-
-  # Select only rows with that LHS
-  ind <- which(r$LHS == lhsn)
-  temp <- r[ind,]
-
-  # Reorder according to OSP
-  temp <- temp[order(temp$oilSP),]
-
-  bso <- rbind(bso, c(temp[1,c("LHS", "tDrill", "well.cap", "prodL", "rec", "xg", "gp", "IRR")], min(temp$oilSP), max(temp$oilSP)))
-
-  # Drop current lhsn from r
-  r <- r[-ind,]
-}
-
-# Get top 5 of geometry parameter set
-r <- with(results, data.frame(design, LHS, oilSP, hspace, vspace, angle, loc, radius, nrow, nwell,
-                              tDrill, well.cap, prodL, rec, xg, gp, IRR))
-
-bso <- NULL
-for (i in 1:5) {
-
-  # Get economic set with lowest oilSP
-  lhsn <- r$design[which.min(r$oilSP)]
-
-  # Select only rows with that LHS
-  ind <- which(r$design == lhsn)
-  temp <- r[ind,]
-
-  # Reorder according to OSP
-  temp <- temp[order(temp$oilSP),]
-
-  bso <- rbind(bso, c(temp[1,c("design", "hspace", "vspace", "angle", "loc", "radius", "nrow", "nwell")], min(temp$oilSP), max(temp$oilSP)))
-
-  # Drop current lhsn from r
-  r <- r[-ind,]
-}
+# # Tables ------------------------------------------------------------------
+#
+# # Best scenarios by OSP - top 5 of econ parameter set
+# r <- with(results, data.frame(design, LHS, oilSP, hspace, vspace, angle, loc, radius, nrow, nwell,
+#                               tDrill, well.cap, prodL, rec, xg, gp, IRR))
+#
+# bso <- NULL
+# for (i in 1:5) {
+#
+#   # Get economic set with lowest oilSP
+#   lhsn <- r$LHS[which.min(r$oilSP)]
+#
+#   # Select only rows with that LHS
+#   ind <- which(r$LHS == lhsn)
+#   temp <- r[ind,]
+#
+#   # Reorder according to OSP
+#   temp <- temp[order(temp$oilSP),]
+#
+#   bso <- rbind(bso, c(temp[1,c("LHS", "tDrill", "well.cap", "prodL", "rec", "xg", "gp", "IRR")], min(temp$oilSP), max(temp$oilSP)))
+#
+#   # Drop current lhsn from r
+#   r <- r[-ind,]
+# }
+#
+# # Get top 5 of geometry parameter set
+# r <- with(results, data.frame(design, LHS, oilSP, hspace, vspace, angle, loc, radius, nrow, nwell,
+#                               tDrill, well.cap, prodL, rec, xg, gp, IRR))
+#
+# bso <- NULL
+# for (i in 1:5) {
+#
+#   # Get economic set with lowest oilSP
+#   lhsn <- r$design[which.min(r$oilSP)]
+#
+#   # Select only rows with that LHS
+#   ind <- which(r$design == lhsn)
+#   temp <- r[ind,]
+#
+#   # Reorder according to OSP
+#   temp <- temp[order(temp$oilSP),]
+#
+#   bso <- rbind(bso, c(temp[1,c("design", "hspace", "vspace", "angle", "loc", "radius", "nrow", "nwell")], min(temp$oilSP), max(temp$oilSP)))
+#
+#   # Drop current lhsn from r
+#   r <- r[-ind,]
+# }

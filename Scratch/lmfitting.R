@@ -1,67 +1,79 @@
-
-# Predefine results matrix
-fitc <- matrix(0, nrow = length(unique(results$design)), ncol = 7)
-rsquared <- nrow(fitc)
-
-for (i in 1:nrow(fitc)) {
-
-  # Select only results from ISD i
-  r <- results[results$design == i,]
-
-  temp <- lm(oilSP~tDrill+well.cap+prodL+rec+xg+IRR+normNER-1, results)
-
-  # Extract coefficients
-  fitc[i,] <- coefficients(temp)
-
-  # Extract R^2 value
-  rsquared[i] <- summary(temp)$r.squared
-}
-
-# Combine
-fitc <- data.frame(fitc, rsquared)
-names(fitc) <- c("tDrill", "well.cap", "prodL", "rec", "xg", "IRR", "normNER", "rsquared")
+# Modify well geometry values
+r <- results
+r$hspace <- r$hspace * 3.28084
+r$vspace <- r$vspace * 3.28084
+r$loc    <- r$loc    * 3.28084
+r$radius <- r$radius * 3.28084 * 12
 
 # 1st order interactions only
-test <- lm(oilSP ~ (hspace+vspace+angle+loc+radius+nrow+nwell+tDrill+well.cap+prodL+rec+xg+gp+IRR-1),
-           results)
+test <- lm(oilSP ~ (hspace+vspace+angle+loc+radius+nrow+nwell+tDrill+well.cap+compl.cap+totalL+rec+xg+gp+IRR-1),
+           r)
 
 # Get median values of all inputs
-mtv <- with(results, c(median(hspace),
-                       median(vspace),
-                       median(angle),
-                       median(loc),
-                       median(radius),
-                       median(nrow),
-                       median(nwell),
-                       median(tDrill),
-                       median(well.cap),
-                       median(prodL),
-                       median(rec),
-                       median(xg),
-                       median(gp),
-                       median(IRR)))
+mtv <- with(r, c(median(hspace),
+                 median(vspace),
+                 median(angle),
+                 median(loc),
+                 median(radius),
+                 median(nrow),
+                 median(nwell),
+                 median(tDrill),
+                 median(well.cap),
+                 median(compl.cap),
+                 median(totalL),
+                 median(rec),
+                 median(xg),
+                 median(gp),
+                 median(IRR)))
+
+
 
 # Barplot
-# setEPS()
-# postscript(file.path(path$plot, "test.eps"))
-# tiff(file.path(path$plot, "lm barplot v10.tif"), res=600, compression = "lzw", height=7, width=10, units="in")
-pdf(file.path(path$plot, "lm barplot v10.pdf"), width = 10, height = 7)
+pdf(file.path(path$plot, "Figure 11-12 Regression relative impact v14.pdf"), width = 10, height = 7)
+
 barplot(mtv*coefficients(test)/max(mtv*coefficients(test)),
         ylim = c(-1,1),
         ylab = "Relative OSP Impact",
-        #xlab = "Input Parameter",
+        xlab = "Input Parameter",
         names.arg = c(expression(H[space]),
                       expression(V[space]),
                       expression(V[angle]),
-                      expression(V[loc]),
+                      expression(V[location]),
                       "r",
                       expression(n[row]),
                       expression(n[well]),
                       expression(t[Drill]),
-                      expression(C[DC]),
+                      expression(C[Drill]),
+                      expression(C[Compl]),
                       "L",
                       expression(x[r]),
                       expression(x[g]),
                       "gp",
                       "IRR"))
+
+dev.off()
+
+setEPS(width = 10, height = 7)
+postscript(file.path(path$plot, "Figure 11-12 Regression relative impact v14.eps"))
+
+barplot(mtv*coefficients(test)/max(mtv*coefficients(test)),
+        ylim = c(-1,1),
+        ylab = "Relative OSP Impact",
+        xlab = "Input Parameter",
+        names.arg = c(expression(H[space]),
+                      expression(V[space]),
+                      expression(V[angle]),
+                      expression(V[location]),
+                      "r",
+                      expression(n[row]),
+                      expression(n[well]),
+                      expression(t[Drill]),
+                      expression(C[Drill]),
+                      expression(C[Compl]),
+                      "L",
+                      expression(x[r]),
+                      expression(x[g]),
+                      "gp",
+                      "IRR"))
+
 dev.off()

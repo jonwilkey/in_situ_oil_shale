@@ -32,7 +32,38 @@ qepr <- apply(epr, 1, median)
 # Set line colors for quantiles used in quant
 linecolor <- "#00000033"
 
-pdf(file.path(path$plot, "electricity demand.pdf"))
+# PDF copy
+pdf(file.path(path$plot, "Figure 11-6 Daily electricity demand curves.pdf"))
+
+# Main plot with largest quantile result
+plot(1:2554, epr[,1]/1e3,
+     ylim = c(100, 100e3),
+     yaxt = "n",
+     log = "y",
+     type = "l",
+     col = "#00000010",
+     xlab = "Time (days)",
+     ylab = "Electricity Demand (MWh / day)")
+for (i in 2:ncol(epr)) {lines(1:2554, epr[,i]/1e3, col = linecolor)}
+lines(1:2554, qepr/1e3, col = "black", lwd = 2, lty = 2)
+
+axis(side = 2, at = c(1e2, 1e3, 1e4, 1e5),
+     labels = c(expression(10^2),
+                expression(10^3),
+                expression(10^4),
+                expression(10^5)),
+     las = 2)
+legend("topright",
+       c("Scenario", "Median"),
+       lty = c(1, 2),
+       col = c(linecolor, "black"),
+       lwd = c(1, 2))
+
+dev.off()
+
+# EPS copy
+setEPS()
+postscript(file.path(path$plot, "Figure 11-6 Daily electricity demand curves.eps"))
 
 # Main plot with largest quantile result
 plot(1:2554, epr[,1]/1e3,

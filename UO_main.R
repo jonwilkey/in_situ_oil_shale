@@ -156,12 +156,13 @@ for (j in 1:nrow(parR)) {
   prodW <- ceiling(parR$nwell[j]/uopt$HPratio)
 
   # Calculate well segment lengths
-  wellL <- data.frame(turn = wtRadius(t = uopt$wellDesign$turnrate,
-                                      p = uopt$wellDesign$pipelength,
-                                      a = uopt$wellDesign$angle),
+  wellL <- data.frame(radius = wtRadius(t = uopt$wellDesign$turnrate,
+                                       p = uopt$wellDesign$pipelength,
+                                       a = uopt$wellDesign$angle),
                       total = parR$totalL[j])
-  wellL$stem <- uopt$wellDesign$TVD-wellL$turn
-  wellL$prod <- wellL$total-(wellL$stem+wellL$turn)
+  wellL$turn <- (uopt$wellDesign$angle * pi / 180) * wellL$radius
+  wellL$stem <- uopt$wellDesign$TVD - wellL$radius
+  wellL$prod <- wellL$total - (wellL$stem + wellL$turn)
 
   # Calculate well drilling schedule
   drillsched <- rep(c(rep(0, parR$tDrill[j]-1), uopt$nrig),

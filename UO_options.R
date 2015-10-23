@@ -19,7 +19,7 @@ uopt <- NULL
 # Version History ---------------------------------------------------------
 
 # Version #
-uopt$ver <- "v13"
+uopt$ver <- "v14"
 
 # v11
 # - What went into book chapter v6
@@ -33,6 +33,9 @@ uopt$ver <- "v13"
 # v13
 # - Adjusted parameter range, specifically removed casing costs from drilling
 # costs, changed mean/sd for gas fraction
+
+# v14
+# - Caught error in how the length of the well turn segment was being calcualted
 
 
 # One-time analysis functions ---------------------------------------------
@@ -72,12 +75,13 @@ remove(parLHS, input.par)
 uopt$parR$tDrill <- as.integer(round(uopt$parR$tDrill))
 
 # Get points that are outside of bounds
-ind <- with(uopt$parR, which(well.cap < 0 |
-                               xg < 0 |
+ind <- with(uopt$parR, which(well.cap < 0 |    # Can't be zero cost
+                               totalL < 2836 | # Can't be shorter than vertical and turn segments of well
+                               xg < 0 |        # Gas fraction must be 0 <= xg <= 1
                                xg > 1 |
-                               gp < 0 |
-                               IRR < 0 |
-                               rec < 0 |
+                               gp < 0 |        # No negative gas prices
+                               IRR < 0 |       # Positive IRR
+                               rec < 0 |       # Recovery fraction must be 0 <= rg <= 1
                                rec > 1))
 
 # Drop points that are outside of bounds.
