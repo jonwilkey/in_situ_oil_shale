@@ -252,43 +252,36 @@ multi.xyhex(r = results, logflag = TRUE)
 dev.off()
 
 
-# Full OSP NER set
-NERfull <- ggplot(results, aes(x = NER, y = oilSP)) +
+# EER plots
+EERfull <- ggplot(results, aes(x = NER, y = oilSP)) +
   stat_binhex(bins = 20) +
   scale_fill_gradientn(colours = c("lightgrey","black")) +
   theme_bw() +
-  xlab("NER") +
+  xlab("EER") +
   ylab("OSP ($/bbl)") +
+  ggtitle("(a)") +
   guides(fill = FALSE) +
   scale_y_continuous(trans = log10_trans(),
                      breaks = c(10^2, 10^3, 10^4, 10^5),
                      labels = trans_format("log10", math_format(10^.x)))
 
-pdf(file.path(path$plot, "Figure 11-10 OSP vs NER v14.pdf"))
-NERfull
-dev.off()
-setEPS()
-postscript(file.path(path$plot, "Figure 11-10 OSP vs NER v14.eps"))
-NERfull
-dev.off()
-
-# Reduced OSP NER set
-NERred <- ggplot(results[results$oilSP <= price.cut,], aes(x = NER, y = oilSP)) +
+# Reduced OSP EER set
+EERred <- ggplot(results[results$oilSP <= price.cut,], aes(x = NER, y = oilSP)) +
   stat_binhex(bins = 20) +
   scale_fill_gradientn(colours = c("lightgrey","black")) +
   theme_bw() +
-  xlab("NER") +
+  xlab("EER") +
   ylab("OSP ($/bbl)") +
+  ggtitle("(b)") +
   guides(fill = FALSE)
 
-pdf(file.path(path$plot, "Figure 11-11 Reduced OSP vs NER v14.pdf"))
-NERred
+pdf(file.path(path$plot, "Figure 11-10 OSP vs EER v14.pdf"), height = 7, width = 14)
+multiplot(EERfull, EERred, cols = 2)
 dev.off()
-setEPS()
-postscript(file.path(path$plot, "Figure 11-11 Reduced OSP vs NER v14.eps"))
-NERred
+setEPS(height = 7, width = 14)
+postscript(file.path(path$plot, "Figure 11-10 OSP vs EER v14.eps"))
+multiplot(EERfull, EERred, cols = 2)
 dev.off()
-
 
 # Boxplots for economically viable set
 r <- results[results$oilSP <= price.cut,]
@@ -306,7 +299,7 @@ bdr <- rbind(data.frame(type = as.factor("CTPI"),   cost = (-r$pb.cap)),
 bdr <- bdr[bdr$cost >= 0,]
 
 # Plot
-pdf(file.path(path$plot, "Figure 11-14 Boxplot costs per bbl v14.pdf"))
+pdf(file.path(path$plot, "Figure 11-13 Boxplot costs per bbl v14.pdf"))
 
 boxplot(cost~type, bdr,
         range = 0,
@@ -323,7 +316,7 @@ boxplot(cost~type, bdr,
 dev.off()
 
 setEPS()
-postscript(file.path(path$plot, "Figure 11-14 Boxplot costs per bbl v14.eps"))
+postscript(file.path(path$plot, "Figure 11-13 Boxplot costs per bbl v14.eps"))
 
 boxplot(cost~type, bdr,
         range = 0,
@@ -364,7 +357,7 @@ cdrc <- rbind(data.frame(type = as.factor("heat"),   frac = r$fc.heat*r$TCI),
               data.frame(type = as.factor("wells"),  frac = r$fc.wells*r$TCI),
               data.frame(type = as.factor("WC"),     frac = r$fc.WC*r$TCI))
 
-pdf(file.path(path$plot, "Figure 11-13 Boxplot capital costs v14.pdf"))
+pdf(file.path(path$plot, "Figure 11-12 Boxplot capital costs v14.pdf"))
 
 boxplot(frac~type, cdrc,
         range = 0,
@@ -396,7 +389,7 @@ axis(side = 2, at = c(1e5, 1e6, 1e7, 1e8, 1e9, 1e10),
 dev.off()
 
 setEPS()
-postscript(file.path(path$plot, "Figure 11-13 Boxplot capital costs v14.eps"))
+postscript(file.path(path$plot, "Figure 11-12 Boxplot capital costs v14.eps"))
 
 boxplot(frac~type, cdrc,
         range = 0,
