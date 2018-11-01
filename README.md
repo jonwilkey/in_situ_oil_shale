@@ -7,13 +7,13 @@
 3. Download and install Git for version control (http://git-scm.com/downloads)3.
 4. Launch RStudio
 5. Install the following packages using the `install.packages("packge_name")` command in R. Alternatively, if you are using RStudio you can use the menu option **Tools > Install Packages...** and then enter the names of the packages you wish to install.
-  1. zoo
-  2. sqldf
-  3. lhs
-  4. beepr
-  5. ggplot2
-  6. scales
-  7. hexbin
+   * zoo
+   * sqldf
+   * lhs
+   * beepr
+   * ggplot2
+   * scales
+   * hexbin
 6. From the menu, select **File > New Project**
 7. In the dialogue menu that pops up, select **Version Control**
 8. In the next menu select **Git**
@@ -27,7 +27,3 @@
 16. Under the section of the scripts labeled **# 1.1 Paths**, change the paths for each of the directories listed to the location on your computer the repository was downloaded.
 
 You can now run the script. If you are using RStudio, this can be done using the menu option **Code > Source** or any of its keyboard shortcuts and variations. All of the model input options are contained in the script **UO_options.R**.
-
-### Questions? ###
-
-* Contact Jon Wilkey (jon.wilkey@gmail.com)
